@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T.Y.S — Prototype</title>
+<style>
+  :root {
+    --primary: #5B4FE9;
+    --primary-dark: #4238C7;
+    --coral: #FF7A59;
+    --bg: #FAFAFA;
+    --card: #FFFFFF;
+    --text: #1C1C1E;
+    --muted: #8E8E93;
+    --border: #EFEFEF;
+    --heart: #ED4956;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #E9E9EE;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .app-shell {
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--bg);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 60px rgba(0,0,0,0.12);
+  }
+
+  /* ---- Top bar, Insta-like ---- */
+  header.topbar {
+    padding: 12px 16px 10px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .brand-row { display: flex; align-items: center; justify-content: space-between; }
+  .brand-left { display: flex; align-items: center; gap: 10px; }
+  .back-btn { display: none; font-size: 20px; background: none; border: none; color: var(--text); padding: 0; }
+  .back-btn.show { display: block; }
+  .brand {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    background: linear-gradient(90deg, var(--primary), var(--coral));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .header-title { font-size: 17px; font-weight: 800; display: none; }
+  .header-title.show { display: block; }
+  .icon-btns { display: flex; gap: 16px; font-size: 20px; color: var(--text); }
+  .icon-btns button { background: none; border: none; font-size: 20px; color: var(--text); padding: 0; position: relative; }
+  .dot { position: absolute; top: -3px; right: -6px; width: 8px; height: 8px; border-radius: 50%; background: var(--heart); border: 1.5px solid white; }
+  .search-input-wrap {
+    margin-top: 10px;
+    background: #F0F0F2;
+    border-radius: 12px;
+    padding: 9px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .search-input-wrap span { font-size: 14px; color: var(--muted); }
+  .search-input-wrap input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 13.5px;
+    color: var(--text);
+    outline: none;
+  }
+  .search-input-wrap input::placeholder { color: var(--muted); }
+
+  /* ---- Stories row ---- */
+  .stories-row {
+    display: flex;
+    gap: 14px;
+    padding: 14px 16px 10px;
+    overflow-x: auto;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+  }
+  .story {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 62px;
+    text-align: center;
+  }
+  .story-ring {
+    width: 58px; height: 58px; border-radius: 50%;
+    padding: 2.5px;
+    background: linear-gradient(135deg, var(--coral), var(--primary));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .story.seen .story-ring { background: #D8D8DC; }
+  .story-ava {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: white;
+    border: 2px solid var(--card);
+  }
+  .story-label { font-size: 10.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+  .story.add .story-ring { background: #D8D8DC; }
+  .story.add .story-ava { background: #F0F0F2; color: var(--muted); font-size: 20px; font-weight: 400; }
+
+  main { flex: 1; padding-bottom: 90px; }
+  main .inner { padding: 14px 16px 8px; }
+  section.screen { display: none; }
+  section.screen.active { display: block; animation: fade .2s ease; }
+  @keyframes fade { from { opacity:0; } to { opacity:1; } }
+
+  .section-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    margin: 4px 2px 10px;
+  }
+
+  /* ---- Composer ---- */
+  .composer {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  .composer-row { display: flex; gap: 10px; align-items: center; }
+  .composer .ava { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); flex-shrink:0; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:13px;}
+  .composer textarea {
+    flex: 1;
+    border: none;
+    background: #F5F5F7;
+    border-radius: 12px;
+    padding: 9px 12px;
+    font-size: 13.5px;
+    color: var(--text);
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    min-height: 36px;
+  }
+  .composer-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .photo-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: 1px solid var(--border); border-radius: 10px;
+    padding: 7px 12px; font-size: 12.5px; font-weight: 600; color: var(--primary-dark);
+  }
+  .publish-btn {
+    background: linear-gradient(90deg, var(--primary), var(--coral));
+    color: white; border: none; border-radius: 10px;
+    padding: 8px 16px; font-size: 12.5px; font-weight: 700;
+  }
+  .publish-btn:disabled { opacity: 0.4; }
+  .composer-preview {
+    margin-top: 10px; position: relative; display: none;
+  }
+  .composer-preview img { width: 100%; border-radius: 12px; display: block; max-height: 220px; object-fit: cover; }
+  .composer-preview .remove {
+    position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.55); color: white;
+    border: none; border-radius: 50%; width: 26px; height: 26px; font-size: 14px; line-height: 1;
+  }
+
+  /* ---- Post card, Insta-like ---- */
+  .post-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .post-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer; }
+  .post-ava {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 800; font-size: 12.5px; flex-shrink: 0;
+  }
+  .post-meta { line-height: 1.2; flex: 1; }
+  .post-name { font-weight: 700; font-size: 13.5px; }
+  .post-name .badge {
+    font-size: 9.5px; font-weight: 700; color: var(--muted); margin-left: 4px; text-transform: uppercase;
+  }
+  .post-time { font-size: 11px; color: var(--muted); }
+  .post-media {
+    width: 100%; aspect-ratio: 1 / 1; background-size: cover; background-position: center;
+    display: flex; align-items: center; justify-content: center; color: white; font-size: 15px; font-weight: 700; text-align: center; padding: 20px;
+  }
+  .post-media img { width: 100%; height: 100%; object-fit: cover; }
+  .action-row { display: flex; align-items: center; gap: 14px; padding: 10px 14px 2px; font-size: 22px; }
+  .action-row .spacer { flex: 1; }
+  .action-row button { background: none; border: none; padding: 0; font-size: 22px; cursor: pointer; color: var(--text); }
+  .action-row button.liked { color: var(--heart); }
+  .likes-line { padding: 6px 14px 0; font-size: 13px; font-weight: 700; }
+  .caption-line { padding: 4px 14px 0; font-size: 13px; line-height: 1.45; }
+  .caption-line b { margin-right: 5px; }
+  .post-tags { padding: 6px 14px 0; }
+  .post-tags span { font-size: 12px; color: var(--primary-dark); margin-right: 6px; font-weight: 600; }
+  .post-footer-note { padding: 8px 14px 14px; font-size: 10.5px; color: var(--muted); }
+
+  /* ---- Recherche ---- */
+  .filter-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
+  .filter-chip {
+    flex-shrink: 0; font-size: 12.5px; font-weight: 600; padding: 7px 14px;
+    border-radius: 20px; background: var(--card); border: 1px solid var(--border); color: var(--muted);
+  }
+  .filter-chip.on { background: var(--text); color: white; border-color: var(--text); }
+
+  .provider-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 12px; display: flex; gap: 12px; margin-bottom: 10px; align-items: center;
+    cursor: pointer;
+  }
+  .provider-ava {
+    width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 16px;
+  }
+  .provider-info { flex: 1; min-width: 0; }
+  .provider-name { font-weight: 700; font-size: 14px; display:flex; align-items:center; gap:6px;}
+  .provider-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .provider-tags { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+  .provider-tags .tag { font-size: 10px; font-weight: 600; color: var(--primary-dark); background: #EEEBFC; padding: 3px 8px; border-radius: 20px; }
+  .chev { color: var(--muted); font-size: 18px; }
+
+  .explore-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 6px;
+  }
+  .explore-cell { aspect-ratio: 1/1; background-size: cover; background-position: center; }
+
+  /* ---- Profil, Insta-like ---- */
+  .profile-top { display: flex; align-items: center; gap: 18px; margin-bottom: 14px; }
+  .profile-ava-lg {
+    width: 78px; height: 78px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 30px;
+    border: 2px solid var(--border);
+  }
+  .profile-stats { flex: 1; display: flex; justify-content: space-around; }
+  .pstat { text-align: center; }
+  .pstat .num { font-weight: 800; font-size: 16px; }
+  .pstat .lbl { font-size: 10.5px; color: var(--muted); margin-top: 1px; }
+
+  .profile-name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+  .profile-role { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .profile-bio { font-size: 13px; line-height: 1.5; margin-bottom: 14px; }
+
+  .profile-btn-row { display: flex; gap: 8px; margin-bottom: 18px; }
+  .profile-btn-row button {
+    flex: 1; padding: 9px 0; border-radius: 10px; font-size: 12.5px; font-weight: 700; border: none;
+  }
+  .btn-primary { background: linear-gradient(90deg, var(--primary), var(--coral)); color: white; }
+  .btn-secondary { background: #F0F0F2; color: var(--text); }
+
+  .info-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; margin-bottom: 12px;
+  }
+  .info-card h3 { margin: 0 0 6px; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+  .info-card p { margin: 0; font-size: 13px; line-height: 1.5; }
+
+  .grid-tabs { display: flex; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 16px 0 2px; }
+  .grid-tab { flex: 1; text-align: center; padding: 10px 0; font-size: 19px; color: var(--muted); border-bottom: 2px solid transparent; }
+  .grid-tab.on { color: var(--text); border-bottom: 2px solid var(--text); }
+
+  /* ---- Activité / notifications ---- */
+  .notif-row { display: flex; gap: 12px; align-items: center; padding: 12px 2px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .notif-ava { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 13px; }
+  .notif-text { font-size: 13px; line-height: 1.4; flex: 1; }
+  .notif-text b { font-weight: 700; }
+  .notif-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .notif-icon { font-size: 15px; }
+
+  /* ---- Messagerie ---- */
+  .conv-row { display: flex; gap: 12px; align-items: center; padding: 11px 2px; cursor: pointer; }
+  .conv-ava { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 15px; }
+  .conv-info { flex: 1; min-width: 0; }
+  .conv-name { font-size: 13.5px; font-weight: 700; }
+  .conv-name.unread { font-weight: 800; }
+  .conv-last { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+  .conv-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); flex-shrink: 0; }
+
+  .thread-header { display: flex; align-items: center; gap: 10px; padding: 4px 2px 14px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .thread-ava { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; }
+  .thread-name { font-weight: 700; font-size: 14px; }
+  .thread-back { background: none; border: none; font-size: 19px; color: var(--text); }
+
+  .bubble-row { display: flex; margin-bottom: 8px; }
+  .bubble-row.me { justify-content: flex-end; }
+  .bubble { max-width: 75%; padding: 9px 13px; border-radius: 16px; font-size: 13px; line-height: 1.4; }
+  .bubble-row.them .bubble { background: #F0F0F2; color: var(--text); border-bottom-left-radius: 4px; }
+  .bubble-row.me .bubble { background: linear-gradient(90deg, var(--primary), var(--coral)); color: white; border-bottom-right-radius: 4px; }
+
+  .thread-input-row { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
+  .thread-input-row input {
+    flex: 1; border: 1px solid var(--border); background: #F5F5F7; border-radius: 20px;
+    padding: 10px 14px; font-size: 13px; outline: none;
+  }
+  .send-btn { background: linear-gradient(90deg, var(--primary), var(--coral)); color: white; border: none; border-radius: 50%; width: 38px; height: 38px; font-size: 15px; flex-shrink: 0; }
+
+  /* ---- Formulaire inscription ---- */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; }
+  .field input, .field select, .field textarea {
+    width: 100%; border: 1px solid var(--border); background: var(--card); border-radius: 10px;
+    padding: 10px 12px; font-size: 13.5px; font-family: inherit; color: var(--text); outline: none;
+  }
+  .field textarea { resize: none; min-height: 70px; }
+  .submit-btn {
+    width: 100%; background: linear-gradient(90deg, var(--primary), var(--coral)); color: white; border: none;
+    border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 800; margin-top: 6px;
+  }
+
+  /* ---- Bottom nav ---- */
+  nav.tabbar {
+    position: sticky;
+    bottom: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    max-width: 430px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .tab {
+    flex: 1; text-align: center; padding: 6px 0; border: none; background: none;
+    color: var(--muted); font-size: 10px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  }
+  .tab .ic { font-size: 20px; }
+  .tab.active { color: var(--text); }
+  .tab.compose .ic {
+    background: linear-gradient(135deg, var(--primary), var(--coral)); color: white; width: 32px; height: 32px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 1px; font-size: 17px;
+  }
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: rgba(20,20,22,0.9); color: white; padding: 10px 18px; border-radius: 20px;
+    font-size: 12.5px; font-weight: 600; z-index: 50; opacity: 0; pointer-events: none; transition: opacity .25s;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ---- Auth overlay (connexion pro / utilisateur) ---- */
+  .auth-overlay {
+    position: fixed; inset: 0; max-width: 430px; margin: 0 auto; z-index: 100; background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px 24px; overflow-y: auto;
+  }
+  .auth-inner { width: 100%; }
+  .auth-brand {
+    font-size: 34px; font-weight: 900; text-align: center;
+    background: linear-gradient(90deg, var(--primary), var(--coral));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .auth-tagline { text-align: center; font-size: 12.5px; color: var(--muted); margin: 6px 0 26px; }
+  .auth-switch { display: flex; background: #F0F0F2; border-radius: 12px; padding: 4px; margin-bottom: 18px; }
+  .auth-switch-btn { flex: 1; border: none; background: none; padding: 10px 0; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--muted); }
+  .auth-switch-btn.on { background: var(--card); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+  .auth-mode-row { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); margin-bottom: 18px; }
+  .auth-mode-link { background: none; border: none; font-size: 12.5px; color: var(--muted); font-weight: 600; padding: 0; }
+  .auth-mode-link.on { color: var(--primary-dark); }
+  .auth-hint { text-align: center; font-size: 11px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <div class="auth-overlay" id="auth-overlay">
+    <div class="auth-inner">
+      <div class="auth-brand">T.Y.S</div>
+      <div class="auth-tagline">La plateforme qui vous connecte — sans commentaire négatif.</div>
+
+      <div class="auth-switch">
+        <button class="auth-switch-btn on" id="switch-pro" onclick="setAuthRole('prestataire')">Connexion professionnelle</button>
+        <button class="auth-switch-btn" id="switch-client" onclick="setAuthRole('client')">Connexion utilisateur</button>
+      </div>
+
+      <div class="auth-mode-row">
+        <button class="auth-mode-link on" id="mode-login" onclick="setAuthMode('login')">Se connecter</button>
+        <span>·</span>
+        <button class="auth-mode-link" id="mode-signup" onclick="setAuthMode('signup')">Créer un compte</button>
+      </div>
+
+      <div class="field" id="auth-name-field" style="display:none">
+        <label>Nom</label>
+        <input id="auth-name" type="text" placeholder="Votre nom ou nom professionnel">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input id="auth-email" type="email" placeholder="vous@exemple.com">
+      </div>
+      <div class="field">
+        <label>Mot de passe</label>
+        <input id="auth-password" type="password" placeholder="••••••••">
+      </div>
+
+      <button class="submit-btn" onclick="submitAuth()">Continuer</button>
+      <div class="auth-hint" id="auth-hint"></div>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand-row">
+      <div class="brand-left">
+        <button class="back-btn" id="back-btn" onclick="goBack()">←</button>
+        <div class="brand" id="brand-logo">T.Y.S</div>
+        <div class="header-title" id="header-title"></div>
+      </div>
+      <div class="icon-btns">
+        <button onclick="showScreen('activite')">♡<span class="dot" id="activite-dot"></span></button>
+        <button onclick="showScreen('messagerie')">✈<span class="dot" id="msg-dot"></span></button>
+      </div>
+    </div>
+    <div class="search-input-wrap" id="search-wrap">
+      <span>🔍</span>
+      <input id="search-input" type="text" placeholder="Rechercher un service, une commune, un tag…">
+    </div>
+  </header>
+
+  <div class="stories-row" id="stories-row">
+    <div class="story add" onclick="showToast('Ajouter une story — bientôt disponible')">
+      <div class="story-ring"><div class="story-ava">＋</div></div>
+      <div class="story-label">Votre story</div>
+    </div>
+    <div class="story" onclick="showProfile('be')">
+      <div class="story-ring"><div class="story-ava" style="background:linear-gradient(135deg,#5B4FE9,#FF7A59)">BE</div></div>
+      <div class="story-label">Bus'Énergie</div>
+    </div>
+    <div class="story" onclick="showProfile('md')">
+      <div class="story-ring"><div class="story-ava" style="background:linear-gradient(135deg,#1BA97A,#7EE9C0)">MD</div></div>
+      <div class="story-label">Marie D.</div>
+    </div>
+    <div class="story seen" onclick="showProfile('jp')">
+      <div class="story-ring"><div class="story-ava" style="background:linear-gradient(135deg,#FF7A59,#FFC29B)">JP</div></div>
+      <div class="story-label">Julien P.</div>
+    </div>
+    <div class="story seen" onclick="showToast('Encore quelques prestataires en cours d\'inscription')">
+      <div class="story-ring"><div class="story-ava" style="background:linear-gradient(135deg,#8E8E93,#C7C7CC)">+3</div></div>
+      <div class="story-label">Autres</div>
+    </div>
+  </div>
+
+  <main>
+    <div class="inner">
+
+    <!-- ACCUEIL / FEED -->
+    <section id="screen-feed" class="screen active">
+
+      <div class="composer">
+        <div class="composer-row">
+          <div class="ava" id="composer-ava">BE</div>
+          <textarea id="composer-text" rows="1" placeholder="Partager une actu, un passage, une photo…" oninput="onComposerInput(this)"></textarea>
+        </div>
+        <div class="composer-preview" id="composer-preview">
+          <img id="composer-preview-img" src="" alt="Aperçu photo">
+          <button class="remove" onclick="clearComposerPhoto()">✕</button>
+        </div>
+        <div class="composer-actions">
+          <button class="photo-btn" onclick="document.getElementById('photo-input').click()">📷 Photo</button>
+          <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="onPhotoChosen(this)">
+          <button class="publish-btn" id="publish-btn" onclick="publishPost()">Publier</button>
+        </div>
+      </div>
+
+      <div id="feed-list"></div>
+
+    </section>
+
+    <!-- RECHERCHE / ANNUAIRE -->
+    <section id="screen-search" class="screen">
+      <div class="section-title">Trouver un prestataire</div>
+      <div class="filter-row">
+        <div class="filter-chip on" onclick="toggleFilter(this)">Tous</div>
+        <div class="filter-chip" onclick="toggleFilter(this)">Coaching</div>
+        <div class="filter-chip" onclick="toggleFilter(this)">Électricité</div>
+        <div class="filter-chip" onclick="toggleFilter(this)">Bricolage</div>
+        <div class="filter-chip" onclick="toggleFilter(this)">Beauté</div>
+        <div class="filter-chip" onclick="toggleFilter(this)">Zones rurales</div>
+      </div>
+
+      <div class="provider-card" onclick="showProfile('be')">
+        <div class="provider-ava" style="background:linear-gradient(135deg,#5B4FE9,#FF7A59)">BE</div>
+        <div class="provider-info">
+          <div class="provider-name">Bus'Énergie</div>
+          <div class="provider-sub">Bus itinérant · Zones rurales</div>
+          <div class="provider-tags"><span class="tag">Coaching</span><span class="tag">Électricité</span><span class="tag">Ateliers</span></div>
+        </div>
+        <div class="chev">›</div>
+      </div>
+
+      <div class="provider-card" onclick="showProfile('md')">
+        <div class="provider-ava" style="background:linear-gradient(135deg,#1BA97A,#7EE9C0)">MD</div>
+        <div class="provider-info">
+          <div class="provider-name">Marie D.</div>
+          <div class="provider-sub">Coiffure à domicile · Secteur Nord</div>
+          <div class="provider-tags"><span class="tag">Coiffure</span><span class="tag">Seniors</span></div>
+        </div>
+        <div class="chev">›</div>
+      </div>
+
+      <div class="provider-card" onclick="showProfile('jp')">
+        <div class="provider-ava" style="background:linear-gradient(135deg,#FF7A59,#FFC29B)">JP</div>
+        <div class="provider-info">
+          <div class="provider-name">Julien P.</div>
+          <div class="provider-sub">Petit bricolage · Itinérant</div>
+          <div class="provider-tags"><span class="tag">Bricolage</span><span class="tag">Dépannage</span></div>
+        </div>
+        <div class="chev">›</div>
+      </div>
+
+      <div class="provider-card" id="join-card" style="opacity:0.75" onclick="showScreen('inscription')">
+        <div class="provider-ava" style="background:linear-gradient(135deg,#7B7A99,#B7B6D6)">+</div>
+        <div class="provider-info">
+          <div class="provider-name">Votre profil ici</div>
+          <div class="provider-sub">Rejoignez T.Y.S en tant que prestataire</div>
+        </div>
+        <div class="chev">›</div>
+      </div>
+
+      <div class="section-title" style="margin-top:20px">Publications récentes</div>
+      <div class="explore-grid" id="explore-grid"></div>
+    </section>
+
+    <!-- PROFIL (dynamique) -->
+    <section id="screen-profile" class="screen">
+      <div class="profile-top">
+        <div class="profile-ava-lg" id="p-ava"></div>
+        <div class="profile-stats">
+          <div class="pstat"><div class="num" id="p-stat-posts">–</div><div class="lbl">Publications</div></div>
+          <div class="pstat"><div class="num" id="p-stat-satisf">–</div><div class="lbl">★ Satisfaction</div></div>
+          <div class="pstat"><div class="num" id="p-stat-communes">–</div><div class="lbl">Communes</div></div>
+        </div>
+      </div>
+      <div class="profile-name" id="p-name"></div>
+      <div class="profile-role" id="p-role"></div>
+      <div class="profile-bio" id="p-bio"></div>
+
+      <div class="profile-btn-row">
+        <button class="btn-primary" id="p-cta">Réserver un passage</button>
+        <button class="btn-secondary" id="p-message-btn">Message</button>
+      </div>
+
+      <div class="info-card">
+        <h3>Services & tarifs</h3>
+        <p id="p-services"></p>
+      </div>
+
+      <div class="info-card">
+        <h3>Zone d'intervention</h3>
+        <p id="p-zone"></p>
+      </div>
+
+      <div class="grid-tabs">
+        <div class="grid-tab on">▦</div>
+        <div class="grid-tab" onclick="showToast('Bientôt disponible')">🏷</div>
+      </div>
+      <div class="explore-grid" id="profile-grid"></div>
+
+      <div id="p-logout" style="display:none; text-align:center; margin-top:18px;">
+        <button onclick="logout()" style="background:none;border:none;color:var(--muted);font-size:12px;font-weight:600;">⎋ Se déconnecter</button>
+      </div>
+    </section>
+
+    <!-- PROFIL UTILISATEUR (client) -->
+    <section id="screen-client-profile" class="screen">
+      <div class="profile-top">
+        <div class="profile-ava-lg" id="cp-ava" style="background:linear-gradient(135deg,#8E8E93,#C7C7CC)">🙂</div>
+        <div class="profile-stats">
+          <div class="pstat"><div class="num" id="cp-stat-posts">0</div><div class="lbl">Publications</div></div>
+          <div class="pstat"><div class="num">–</div><div class="lbl">Réservations</div></div>
+          <div class="pstat"><div class="num">–</div><div class="lbl">Favoris</div></div>
+        </div>
+      </div>
+      <div class="profile-name" id="cp-name"></div>
+      <div class="profile-role">Compte utilisateur T.Y.S</div>
+      <div class="profile-bio">Retrouvez ici vos réservations, vos échanges avec les prestataires et vos publications.</div>
+
+      <div class="info-card">
+        <h3>Envie de proposer vos services ?</h3>
+        <p>Vous pouvez rejoindre T.Y.S en tant que prestataire dès maintenant, avec un compte séparé. (Plus tard, cette bascule se fera directement depuis ce profil, sans en recréer un nouveau.)</p>
+      </div>
+      <button class="submit-btn" onclick="showScreen('inscription')" style="margin-bottom:16px;">Devenir prestataire</button>
+
+      <div class="grid-tabs"><div class="grid-tab on">▦</div></div>
+      <div class="explore-grid" id="cp-grid"></div>
+
+      <div style="text-align:center; margin-top:18px;">
+        <button onclick="logout()" style="background:none;border:none;color:var(--muted);font-size:12px;font-weight:600;">⎋ Se déconnecter</button>
+      </div>
+    </section>
+
+    <!-- ACTIVITÉ / NOTIFICATIONS -->
+    <section id="screen-activite" class="screen">
+      <div class="section-title">Activité récente</div>
+      <div id="notif-list"></div>
+    </section>
+
+    <!-- MESSAGERIE : liste des conversations -->
+    <section id="screen-messagerie" class="screen">
+      <div class="section-title">Messages</div>
+      <div id="conv-list"></div>
+    </section>
+
+    <!-- MESSAGERIE : conversation -->
+    <section id="screen-thread" class="screen">
+      <div class="thread-header">
+        <button class="thread-back" onclick="showScreen('messagerie')">←</button>
+        <div class="thread-ava" id="thread-ava"></div>
+        <div class="thread-name" id="thread-name"></div>
+      </div>
+      <div id="thread-messages"></div>
+      <div class="thread-input-row">
+        <input id="thread-input" type="text" placeholder="Écrire un message…" onkeydown="if(event.key==='Enter') sendMessage();">
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+      </div>
+    </section>
+
+    <!-- INSCRIPTION PRESTATAIRE -->
+    <section id="screen-inscription" class="screen">
+      <div class="section-title">Devenir prestataire T.Y.S</div>
+      <div class="field">
+        <label>Nom / Pseudo professionnel</label>
+        <input id="reg-name" type="text" placeholder="Ex. Léa Mobile Retouches">
+      </div>
+      <div class="field">
+        <label>Activité principale</label>
+        <select id="reg-activity">
+          <option>Coaching / sport</option>
+          <option>Électricité / dépannage</option>
+          <option>Bricolage</option>
+          <option>Beauté / bien-être</option>
+          <option>Autre service itinérant</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Zone d'intervention</label>
+        <input id="reg-zone" type="text" placeholder="Ex. Secteur Sud, tournées le mercredi">
+      </div>
+      <div class="field">
+        <label>Tarif indicatif</label>
+        <input id="reg-price" type="text" placeholder="Ex. 40 €/h ou 250 €/mois">
+      </div>
+      <div class="field">
+        <label>Description courte</label>
+        <textarea id="reg-bio" placeholder="Présentez votre activité en 1-2 phrases…"></textarea>
+      </div>
+      <button class="submit-btn" onclick="submitRegistration()">Envoyer ma demande</button>
+    </section>
+
+    </div>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab active" id="tab-feed" onclick="showScreen('feed')">
+      <span class="ic">⌂</span>Accueil
+    </button>
+    <button class="tab" id="tab-search" onclick="showScreen('search')">
+      <span class="ic">⌕</span>Recherche
+    </button>
+    <button class="tab compose" onclick="showScreen('feed'); document.getElementById('composer-text').focus();">
+      <span class="ic">＋</span>Publier
+    </button>
+    <button class="tab" id="tab-profile" onclick="goToMyProfile()">
+      <span class="ic">☺</span>Profil
+    </button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  // ============================================================
+  // Navigation
+  // ============================================================
+  var MAIN_SCREENS = ['feed', 'search', 'profile'];
+  var lastMainScreen = 'feed';
+  var screenTitles = {
+    feed: '', search: '', profile: '',
+    activite: 'Activité', messagerie: 'Messages', thread: '',
+    inscription: 'Devenir prestataire', 'client-profile': 'Mon profil'
+  };
+
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById('screen-' + name).classList.add('active');
+
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+    if (name === 'feed') document.getElementById('tab-feed').classList.add('active');
+    if (name === 'search') document.getElementById('tab-search').classList.add('active');
+    if (name === 'profile' || name === 'client-profile') document.getElementById('tab-profile').classList.add('active');
+
+    var isSub = MAIN_SCREENS.indexOf(name) === -1;
+    document.getElementById('back-btn').classList.toggle('show', isSub);
+    document.getElementById('brand-logo').style.display = isSub ? 'none' : 'block';
+    var titleEl = document.getElementById('header-title');
+    if (isSub) {
+      titleEl.textContent = screenTitles[name] || '';
+      titleEl.classList.add('show');
+    } else {
+      titleEl.classList.remove('show');
+    }
+    document.getElementById('search-wrap').style.display = (name === 'feed' || name === 'search') ? 'flex' : 'none';
+    document.getElementById('stories-row').style.display = (name === 'feed') ? 'flex' : 'none';
+
+    if (MAIN_SCREENS.indexOf(name) !== -1) lastMainScreen = name;
+    window.scrollTo(0,0);
+  }
+
+  function goBack() {
+    showScreen(lastMainScreen);
+  }
+
+  function toggleFilter(el) {
+    document.querySelectorAll('.filter-chip').forEach(function(c){ c.classList.remove('on'); });
+    el.classList.add('on');
+  }
+
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  }
+
+  // ============================================================
+  // Connexion professionnelle / utilisateur
+  // ============================================================
+  // Deux parcours de connexion distincts, comme demandé : un pour les prestataires,
+  // un pour les utilisateurs/clients. La bascule "un utilisateur devient aussi
+  // prestataire en gardant son profil" est volontairement laissée pour plus tard —
+  // pour l'instant, un compte professionnel et un compte utilisateur restent deux
+  // comptes séparés (voir le bouton "Devenir prestataire" du profil utilisateur).
+  var authRole = 'prestataire';
+  var authMode = 'login';
+  var currentUser = null;
+
+  function setAuthRole(role) {
+    authRole = role;
+    document.getElementById('switch-pro').classList.toggle('on', role === 'prestataire');
+    document.getElementById('switch-client').classList.toggle('on', role === 'client');
+    updateAuthHint();
+  }
+
+  function setAuthMode(mode) {
+    authMode = mode;
+    document.getElementById('mode-login').classList.toggle('on', mode === 'login');
+    document.getElementById('mode-signup').classList.toggle('on', mode === 'signup');
+    document.getElementById('auth-name-field').style.display = mode === 'signup' ? 'block' : 'none';
+    updateAuthHint();
+  }
+
+  function updateAuthHint() {
+    var hint = document.getElementById('auth-hint');
+    if (authMode === 'login') {
+      hint.textContent = authRole === 'prestataire'
+        ? 'Démo : contact@busenergie.example / demo1234'
+        : 'Démo : bernard@example.com / demo1234';
+    } else {
+      hint.textContent = authRole === 'prestataire'
+        ? 'Création de compte professionnel — le profil (services, tarifs, zone) se complète ensuite.'
+        : 'Création de compte utilisateur.';
+    }
+  }
+
+  function initialsOf(name) {
+    return name.split(' ').filter(Boolean).map(function(w){ return w[0]; }).join('').slice(0, 2).toUpperCase();
+  }
+
+  function submitAuth() {
+    var email = document.getElementById('auth-email').value.trim();
+    var password = document.getElementById('auth-password').value.trim();
+    var name = document.getElementById('auth-name').value.trim();
+    if (!email || !password || (authMode === 'signup' && !name)) {
+      showToast('Merci de remplir les champs requis');
+      return;
+    }
+    if (authRole === 'prestataire') {
+      currentUser = {
+        id: 'be', name: name || "Bus'Énergie", initials: 'BE',
+        avaBg: providers.be.avaBg, role: 'prestataire', badge: 'Prestataire'
+      };
+    } else {
+      var uname = name || 'Famille Bernard';
+      currentUser = {
+        id: 'client_bernard', name: uname, initials: name ? initialsOf(uname) : 'FB',
+        avaBg: 'linear-gradient(135deg,#8E8E93,#C7C7CC)', role: 'client', badge: 'Utilisateur'
+      };
+    }
+    enterApp();
+  }
+
+  function enterApp() {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('composer-ava').textContent = currentUser.initials;
+    document.getElementById('composer-ava').style.background = currentUser.avaBg;
+    showScreen('feed');
+    showToast('Connecté en tant que ' + (currentUser.role === 'prestataire' ? 'professionnel' : 'utilisateur'));
+  }
+
+  function goToMyProfile() {
+    if (!currentUser) return;
+    if (currentUser.role === 'prestataire') {
+      showProfile(currentUser.id);
+    } else {
+      renderClientProfile();
+      showScreen('client-profile');
+    }
+  }
+
+  function logout() {
+    currentUser = null;
+    document.getElementById('auth-email').value = '';
+    document.getElementById('auth-password').value = '';
+    document.getElementById('auth-name').value = '';
+    document.getElementById('auth-overlay').style.display = 'flex';
+  }
+
+  function renderClientProfile() {
+    document.getElementById('cp-name').textContent = currentUser.name;
+    document.getElementById('cp-ava').textContent = currentUser.initials;
+    document.getElementById('cp-ava').style.background = currentUser.avaBg;
+    var myPosts = posts.filter(function(p){ return p.pid === currentUser.id; });
+    document.getElementById('cp-stat-posts').textContent = myPosts.length;
+    var grid = document.getElementById('cp-grid');
+    grid.innerHTML = '';
+    myPosts.forEach(function(p) {
+      var bg = p.photo ? ('url(' + p.photo + ')') : p.photoBg;
+      var cell = document.createElement('div');
+      cell.className = 'explore-cell';
+      cell.style.background = bg;
+      cell.style.backgroundSize = 'cover';
+      grid.appendChild(cell);
+    });
+  }
+
+  // ============================================================
+  // Providers (data-driven profiles)
+  // ============================================================
+  var providers = {
+    be: {
+      name: "Bus'Énergie", emoji: '🚐', initials: 'BE',
+      avaBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
+      role: "Prestataire · Coaching · Électricité · Ateliers",
+      bio: "On vient jusqu'à vous — trois services, une seule visite. 🔧💪 Zéro déplacement inutile.",
+      services: "<strong>Coaching sportif</strong> — 300 €/mois (forfait)<br><strong>Dépannage électrique</strong> — 60 €/h<br><strong>Ateliers pratiques</strong> — sur demande",
+      zone: "Tournées hebdomadaires — zones rurales et communes mal desservies.",
+      satisf: '4.9', communes: '6'
+    },
+    md: {
+      name: "Marie D.", emoji: '💇‍♀️', initials: 'MD',
+      avaBg: 'linear-gradient(135deg,#1BA97A,#7EE9C0)',
+      role: "Prestataire · Coiffure à domicile",
+      bio: "Coiffeuse itinérante, spécialisée dans l'accompagnement des seniors et des personnes à mobilité réduite. Douceur et écoute avant tout. ✂️",
+      services: "<strong>Coupe & brushing</strong> — 25 €<br><strong>Coloration</strong> — 45 €<br><strong>Forfait mensuel seniors</strong> — sur devis",
+      zone: "Secteur Nord — passages tous les jeudis.",
+      satisf: '4.8', communes: '3'
+    },
+    jp: {
+      name: "Julien P.", emoji: '🛠', initials: 'JP',
+      avaBg: 'linear-gradient(135deg,#FF7A59,#FFC29B)',
+      role: "Prestataire · Petit bricolage",
+      bio: "Interventions de petit bricolage et dépannage du quotidien : montage, fixation, petites réparations. Disponible en semaine et le samedi matin.",
+      services: "<strong>Petites réparations</strong> — 35 €/h<br><strong>Montage de meuble</strong> — sur devis<br><strong>Pack \"Journée bricolage\"</strong> — 220 €",
+      zone: "Itinérant — zone élargie, à la demande.",
+      satisf: '4.7', communes: '5'
+    }
+  };
+  var currentProfileId = 'be';
+
+  function showProfile(id) {
+    currentProfileId = id;
+    var p = providers[id];
+    document.getElementById('p-ava').textContent = p.emoji;
+    document.getElementById('p-ava').style.background = p.avaBg;
+    document.getElementById('p-name').textContent = p.name;
+    document.getElementById('p-role').textContent = p.role;
+    document.getElementById('p-bio').textContent = p.bio;
+    document.getElementById('p-services').innerHTML = p.services;
+    document.getElementById('p-zone').textContent = p.zone;
+    document.getElementById('p-stat-satisf').textContent = p.satisf;
+    document.getElementById('p-stat-communes').textContent = p.communes;
+    document.getElementById('p-stat-posts').textContent = posts.filter(function(post){ return post.pid === id; }).length;
+    document.getElementById('p-cta').onclick = function() { showToast('Demande de réservation envoyée à ' + p.name + ' (démo)'); };
+    document.getElementById('p-message-btn').onclick = function() { openThread(id); };
+    document.getElementById('p-logout').style.display =
+      (currentUser && currentUser.role === 'prestataire' && currentUser.id === id) ? 'block' : 'none';
+    renderGrids();
+    showScreen('profile');
+  }
+
+  // ============================================================
+  // Feed / posts
+  // ============================================================
+  var posts = [
+    {
+      id: 3, pid: 'be', author: "Bus'Énergie", initials: 'BE', badge: 'Prestataire', time: 'Il y a 2 h · Sur la route',
+      avaBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
+      photo: null, photoBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)', photoLabel: '🚐 Passage du bus',
+      caption: '📍 De passage cette semaine ! Le bus était sur la place du village mardi — 3 séances de coaching, 2 dépannages élec et un après-midi atelier bricolage. Merci à tous ceux qui sont passés dire bonjour 🙌',
+      tags: ['#CoachingSportif', '#DépannageÉlectrique', '#ZonesRurales'],
+      likes: 24, liked: false
+    },
+    {
+      id: 2, pid: 'md', author: 'Marie D.', initials: 'MD', badge: 'Prestataire', time: 'Hier · Coiffure à domicile',
+      avaBg: 'linear-gradient(135deg,#1BA97A,#7EE9C0)',
+      photo: null, photoBg: 'linear-gradient(135deg,#1BA97A,#7EE9C0)', photoLabel: '✂️ Studio mobile',
+      caption: 'Merci pour votre confiance cette semaine ✂️ Trois nouveaux créneaux ouverts pour les seniors du secteur, sur rendez-vous.',
+      tags: ['#CoiffureÀDomicile', '#Seniors'],
+      likes: 9, liked: false
+    },
+    {
+      id: 1, pid: 'jp', author: 'Julien P.', initials: 'JP', badge: 'Prestataire', time: 'Il y a 3 j · Petit bricolage',
+      avaBg: 'linear-gradient(135deg,#FF7A59,#FFC29B)',
+      photo: null, photoBg: 'linear-gradient(135deg,#FF7A59,#FFC29B)', photoLabel: '🛠 Journée bricolage',
+      caption: 'Journée bien remplie : 4 interventions de petit bricolage dans le quartier. Prochaine tournée annoncée dans quelques jours.',
+      tags: ['#Bricolage', '#ServiceItinérant'],
+      likes: 6, liked: false
+    }
+  ];
+  var nextId = 4;
+
+  function renderFeed() {
+    var list = document.getElementById('feed-list');
+    list.innerHTML = '';
+    posts.forEach(function(p) {
+      var card = document.createElement('div');
+      card.className = 'post-card';
+      var mediaInner = p.photo ? '<img src="' + p.photo + '" alt="photo">' : '';
+      card.innerHTML =
+        '<div class="post-head" data-pid="' + p.pid + '">' +
+          '<div class="post-ava" style="background:' + p.avaBg + '">' + p.initials + '</div>' +
+          '<div class="post-meta"><div class="post-name">' + p.author + ' <span class="badge">' + p.badge + '</span></div>' +
+          '<div class="post-time">' + p.time + '</div></div>' +
+        '</div>' +
+        '<div class="post-media" style="background:' + p.photoBg + '">' + mediaInner + (p.photo ? '' : p.photoLabel) + '</div>' +
+        '<div class="action-row">' +
+          '<button class="heart-btn' + (p.liked ? ' liked' : '') + '" data-id="' + p.id + '">' + (p.liked ? '♥' : '♡') + '</button>' +
+          '<button>◔</button>' +
+          '<button>➤</button>' +
+          '<div class="spacer"></div>' +
+          '<button>⚑</button>' +
+        '</div>' +
+        '<div class="likes-line" id="likes-' + p.id + '">' + p.likes + ' soutiens</div>' +
+        '<div class="caption-line"><b>' + p.author + '</b>' + p.caption + '</div>' +
+        '<div class="post-tags">' + p.tags.map(function(t){ return '<span>' + t + '</span>'; }).join('') + '</div>' +
+        '<div class="post-footer-note">✦ Réactions positives uniquement — pas de commentaire négatif sur T.Y.S.</div>';
+      list.appendChild(card);
+    });
+    list.querySelectorAll('.heart-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var id = parseInt(btn.getAttribute('data-id'), 10);
+        var post = posts.find(function(p){ return p.id === id; });
+        post.liked = !post.liked;
+        post.likes += post.liked ? 1 : -1;
+        renderFeed();
+      });
+    });
+    list.querySelectorAll('.post-head').forEach(function(el) {
+      var pid = el.getAttribute('data-pid');
+      if (providers[pid]) {
+        el.addEventListener('click', function() { showProfile(pid); });
+      }
+    });
+    renderGrids();
+  }
+
+  function renderGrids() {
+    var explore = document.getElementById('explore-grid');
+    var profileGrid = document.getElementById('profile-grid');
+    explore.innerHTML = '';
+    profileGrid.innerHTML = '';
+    posts.forEach(function(p) {
+      var bg = p.photo ? ('url(' + p.photo + ')') : p.photoBg;
+      var cell1 = document.createElement('div');
+      cell1.className = 'explore-cell';
+      cell1.style.background = bg;
+      cell1.style.backgroundSize = 'cover';
+      explore.appendChild(cell1);
+      if (p.pid === currentProfileId) {
+        var cell2 = document.createElement('div');
+        cell2.className = 'explore-cell';
+        cell2.style.background = bg;
+        cell2.style.backgroundSize = 'cover';
+        profileGrid.appendChild(cell2);
+      }
+    });
+  }
+
+  // ============================================================
+  // Composer
+  // ============================================================
+  var pendingPhoto = null;
+
+  function onComposerInput(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function onPhotoChosen(input) {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      pendingPhoto = e.target.result;
+      document.getElementById('composer-preview-img').src = pendingPhoto;
+      document.getElementById('composer-preview').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearComposerPhoto() {
+    pendingPhoto = null;
+    document.getElementById('photo-input').value = '';
+    document.getElementById('composer-preview').style.display = 'none';
+  }
+
+  function publishPost() {
+    var textEl = document.getElementById('composer-text');
+    var text = textEl.value.trim();
+    if (!text && !pendingPhoto) {
+      showToast('Ajoutez un texte ou une photo avant de publier');
+      return;
+    }
+    var author = currentUser || { id: 'be', name: "Bus'Énergie", initials: 'BE', avaBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)', badge: 'Prestataire' };
+    posts.unshift({
+      id: nextId++, pid: author.id,
+      author: author.name, initials: author.initials, badge: author.badge, time: "À l'instant",
+      avaBg: author.avaBg,
+      photo: pendingPhoto, photoBg: author.avaBg, photoLabel: '📷 Nouvelle publication',
+      caption: text || '(photo partagée)',
+      tags: [],
+      likes: 0, liked: false
+    });
+    textEl.value = '';
+    onComposerInput(textEl);
+    clearComposerPhoto();
+    renderFeed();
+    if (currentUser && currentUser.role === 'client') renderClientProfile();
+    showToast('Publié !');
+  }
+
+  // ============================================================
+  // Activité / notifications
+  // ============================================================
+  var notifications = [
+    { pid: 'md', icon: '👏', text: '<b>Marie D.</b> a soutenu votre publication', time: 'Il y a 12 min' },
+    { pid: 'jp', icon: '🙌', text: '<b>Julien P.</b> a réagi "Merci" à votre passage', time: 'Il y a 1 h' },
+    { pid: 'be', icon: '📍', text: 'Votre bus est attendu sur 2 nouvelles communes cette semaine', time: 'Il y a 3 h' },
+    { pid: 'md', icon: '❤️', text: '<b>Marie D.</b> a mis un coup de cœur sur votre publication', time: 'Hier' },
+    { pid: 'jp', icon: '✉️', text: '<b>Julien P.</b> vous a envoyé un message', time: 'Hier' }
+  ];
+
+  function renderNotifications() {
+    var list = document.getElementById('notif-list');
+    list.innerHTML = '';
+    notifications.forEach(function(n) {
+      var p = providers[n.pid];
+      var row = document.createElement('div');
+      row.className = 'notif-row';
+      row.innerHTML =
+        '<div class="notif-ava" style="background:' + p.avaBg + '">' + p.initials + '</div>' +
+        '<div class="notif-text">' + n.icon + ' ' + n.text + '<div class="notif-time">' + n.time + '</div></div>';
+      row.addEventListener('click', function() { showProfile(n.pid); });
+      list.appendChild(row);
+    });
+    document.getElementById('activite-dot').style.display = 'block';
+  }
+
+  // ============================================================
+  // Messagerie
+  // ============================================================
+  var conversations = [
+    { id: 'md', name: 'Marie D.', avaBg: providers.md.avaBg, initials: 'MD', last: 'Merci, à bientôt !', time: '10:32', unread: false },
+    { id: 'jp', name: 'Julien P.', avaBg: providers.jp.avaBg, initials: 'JP', last: 'Vous serez là mardi prochain ?', time: 'Hier', unread: true },
+    { id: 'client1', name: 'Famille Bernard', avaBg: 'linear-gradient(135deg,#8E8E93,#C7C7CC)', initials: 'FB', last: 'Parfait, on vous attend jeudi.', time: 'Lun.', unread: false }
+  ];
+
+  var threadMessages = {
+    md: [
+      { from: 'them', text: 'Bonjour ! Vous repassez sur le secteur Nord bientôt ?' },
+      { from: 'me', text: 'Bonjour Marie, je pensais y être jeudi prochain en fin de matinée.' },
+      { from: 'them', text: 'Merci, à bientôt !' }
+    ],
+    jp: [
+      { from: 'them', text: 'Salut, vous serez là mardi prochain ?' },
+      { from: 'me', text: 'Oui, je passe en début d\'après-midi comme d\'habitude.' }
+    ],
+    client1: [
+      { from: 'them', text: 'Bonjour, est-ce que le bus passe bien près de la mairie jeudi ?' },
+      { from: 'me', text: 'Oui, arrêt prévu de 14h à 17h sur la place.' },
+      { from: 'them', text: 'Parfait, on vous attend jeudi.' }
+    ]
+  };
+
+  function convName(id) {
+    var c = conversations.find(function(x){ return x.id === id; });
+    return c ? c.name : id;
+  }
+  function convAva(id) {
+    var c = conversations.find(function(x){ return x.id === id; });
+    return c ? c.avaBg : 'linear-gradient(135deg,#8E8E93,#C7C7CC)';
+  }
+  function convInitials(id) {
+    var c = conversations.find(function(x){ return x.id === id; });
+    return c ? c.initials : '?';
+  }
+
+  function renderConversations() {
+    var list = document.getElementById('conv-list');
+    list.innerHTML = '';
+    conversations.forEach(function(c) {
+      var row = document.createElement('div');
+      row.className = 'conv-row';
+      row.innerHTML =
+        '<div class="conv-ava" style="background:' + c.avaBg + '">' + c.initials + '</div>' +
+        '<div class="conv-info"><div class="conv-name' + (c.unread ? ' unread' : '') + '">' + c.name + '</div>' +
+        '<div class="conv-last">' + c.last + '</div></div>' +
+        '<div class="conv-time">' + c.time + (c.unread ? '<br><span class="unread-dot" style="display:inline-block;margin-top:4px;"></span>' : '') + '</div>';
+      row.addEventListener('click', function() { c.unread = false; openThread(c.id); });
+      list.appendChild(row);
+    });
+    var anyUnread = conversations.some(function(c){ return c.unread; });
+    document.getElementById('msg-dot').style.display = anyUnread ? 'block' : 'none';
+  }
+
+  var currentThreadId = null;
+
+  function openThread(id) {
+    currentThreadId = id;
+    document.getElementById('thread-ava').style.background = convAva(id);
+    document.getElementById('thread-ava').textContent = convInitials(id);
+    document.getElementById('thread-name').textContent = convName(id);
+    if (!threadMessages[id]) threadMessages[id] = [];
+    renderThread();
+    showScreen('thread');
+  }
+
+  function renderThread() {
+    var box = document.getElementById('thread-messages');
+    box.innerHTML = '';
+    (threadMessages[currentThreadId] || []).forEach(function(m) {
+      var row = document.createElement('div');
+      row.className = 'bubble-row ' + m.from;
+      row.innerHTML = '<div class="bubble">' + m.text + '</div>';
+      box.appendChild(row);
+    });
+  }
+
+  function sendMessage() {
+    var input = document.getElementById('thread-input');
+    var text = input.value.trim();
+    if (!text || !currentThreadId) return;
+    threadMessages[currentThreadId].push({ from: 'me', text: text });
+    input.value = '';
+    renderThread();
+    var conv = conversations.find(function(c){ return c.id === currentThreadId; });
+    if (conv) conv.last = text;
+  }
+
+  // ============================================================
+  // Inscription prestataire
+  // ============================================================
+  function submitRegistration() {
+    var name = document.getElementById('reg-name').value.trim();
+    var activity = document.getElementById('reg-activity').value;
+    var zone = document.getElementById('reg-zone').value.trim();
+    var price = document.getElementById('reg-price').value.trim();
+    var bio = document.getElementById('reg-bio').value.trim();
+
+    if (!name || !zone) {
+      showToast('Merci de renseigner au moins le nom et la zone');
+      return;
+    }
+
+    var initials = name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+    var newId = 'new' + Date.now ? 'new_' + name.replace(/\s+/g,'_') : 'new_provider';
+    var grad = 'linear-gradient(135deg,#8E8E93,#C7C7CC)';
+
+    providers[newId] = {
+      name: name, emoji: '⭐', initials: initials, avaBg: grad,
+      role: 'Prestataire · ' + activity,
+      bio: bio || ('Nouveau prestataire T.Y.S — ' + activity + '.'),
+      services: (price ? ('<strong>Tarif indicatif</strong> — ' + price) : 'Tarifs à confirmer'),
+      zone: zone, satisf: '—', communes: '—'
+    };
+
+    var card = document.createElement('div');
+    card.className = 'provider-card';
+    card.innerHTML =
+      '<div class="provider-ava" style="background:' + grad + '">' + initials + '</div>' +
+      '<div class="provider-info"><div class="provider-name">' + name + '</div>' +
+      '<div class="provider-sub">' + activity + ' · ' + zone + '</div></div>' +
+      '<div class="chev">›</div>';
+    card.addEventListener('click', function() { showProfile(newId); });
+    document.getElementById('join-card').insertAdjacentElement('beforebegin', card);
+
+    document.getElementById('reg-name').value = '';
+    document.getElementById('reg-zone').value = '';
+    document.getElementById('reg-price').value = '';
+    document.getElementById('reg-bio').value = '';
+
+    showToast('Demande envoyée — profil ajouté en démonstration');
+    showScreen('search');
+  }
+
+  // ============================================================
+  // Init
+  // ============================================================
+  renderFeed();
+  renderNotifications();
+  renderConversations();
+  updateAuthHint();
+  document.getElementById('activite-dot').style.display = 'block';
+</script>
+
+</body>
+</html>
