@@ -1,0 +1,15 @@
+{
+  "name": "tys-backend",
+  "version": "0.1.0",
+  "description": "Fondations backend pour T.Y.S — mise en relation prestataires/clients + fil de publications positif. Zéro dépendance externe (Node.js natif + node:sqlite).",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node --experimental-sqlite src/server.js",
+    "seed": "node --experimental-sqlite src/seed.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {}
+}
