@@ -438,7 +438,7 @@
       <div class="story-label">Votre story</div>
     </div>
     <div class="story" onclick="showProfile('be')">
-      <div class="story-ring"><div class="story-ava" style="background:linear-gradient(135deg,#5B4FE9,#FF7A59)">BE</div></div>
+      <div class="story-ring"><div class="story-ava" style="background:linear-gradient(135deg,#1B6B4A,#8BC34A)">BE</div></div>
       <div class="story-label">Bus'Énergie</div>
     </div>
     <div class="story" onclick="showProfile('md')">
@@ -494,7 +494,7 @@
       </div>
 
       <div class="provider-card" onclick="showProfile('be')">
-        <div class="provider-ava" style="background:linear-gradient(135deg,#5B4FE9,#FF7A59)">BE</div>
+        <div class="provider-ava" style="background:linear-gradient(135deg,#1B6B4A,#8BC34A)">BE</div>
         <div class="provider-info">
           <div class="provider-name">Bus'Énergie</div>
           <div class="provider-sub">Bus itinérant · Zones rurales, quartiers prioritaires</div>
@@ -854,7 +854,7 @@
   var providers = {
     be: {
       name: "Bus'Énergie", emoji: '🚐', initials: 'BE',
-      avaBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
+      avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
       role: "Prestataire · Coaching sportif · Électricité · Ateliers éco-énergie",
       bio: "La santé par le mouvement, directement chez vous 🌱 Un bus, un intervenant polyvalent, trois services, une seule visite. 🔧💪 Sport sur ordonnance, dépannage électrique et ateliers éco-énergie pour les collectivités, entreprises et particuliers des zones rurales. Assuré en Responsabilité Civile Professionnelle (risque sport et risque électrique) — habilitation électrique B1V à jour.",
       services: "<strong>Coaching sportif</strong> — 300 €/mois (forfait) · séances seniors, entreprises (QVT) et sport sur ordonnance<br><strong>Dépannage électrique</strong> — 60 €/h (habilitation B1V)<br><strong>Ateliers éco-énergie</strong> — 500 €/demi-journée · sensibilisation aux économies d'énergie",
@@ -909,16 +909,16 @@
   var posts = [
     {
       id: 4, pid: 'be', author: "Bus'Énergie", initials: 'BE', badge: 'Prestataire', time: "Aujourd'hui · Aménagement du bus",
-      avaBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
-      photo: null, photoBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)', photoLabel: '🚐☀️ Bus\'Énergie fait le plein',
+      avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
+      photo: null, photoBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)', photoLabel: '🚐☀️ Bus\'Énergie fait le plein',
       caption: "☀️ Le bus est fin prêt ! Panneaux solaires sur le toit, espace sportif équipé (sangles TRX, miroir de correction de posture, sol amorti) et coin atelier avec établi escamotable et panneau à outils pour le dépannage élec. La santé par le mouvement, directement chez vous 💪🔧 Réservation des créneaux bientôt ouverte.",
       tags: ['#SportSantéItinérant', '#CoachingSportif', '#DépannageÉlectrique'],
       likes: 18, liked: false
     },
     {
       id: 3, pid: 'be', author: "Bus'Énergie", initials: 'BE', badge: 'Prestataire', time: 'Il y a 2 h · Sur la route',
-      avaBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
-      photo: null, photoBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)', photoLabel: '🚐 Passage du bus',
+      avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
+      photo: null, photoBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)', photoLabel: '🚐 Passage du bus',
       caption: '📍 De passage cette semaine ! Le bus était sur la place du village mardi — 3 séances de coaching, 2 dépannages élec et un après-midi atelier bricolage. Merci à tous ceux qui sont passés dire bonjour 🙌',
       tags: ['#CoachingSportif', '#DépannageÉlectrique', '#ZonesRurales'],
       likes: 24, liked: false
@@ -1044,7 +1044,7 @@
       showToast('Ajoutez un texte ou une photo avant de publier');
       return;
     }
-    var author = currentUser || { id: 'be', name: "Bus'Énergie", initials: 'BE', avaBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)', badge: 'Prestataire' };
+    var author = currentUser || { id: 'be', name: "Bus'Énergie", initials: 'BE', avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)', badge: 'Prestataire' };
     posts.unshift({
       id: nextId++, pid: author.id,
       author: author.name, initials: author.initials, badge: author.badge, time: "À l'instant",

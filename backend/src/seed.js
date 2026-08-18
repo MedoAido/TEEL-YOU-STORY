@@ -36,7 +36,7 @@ upsertProfile(be, {
   bio: "La santé par le mouvement, directement chez vous. Un bus, un intervenant polyvalent, trois services, une seule visite. Sport sur ordonnance, dépannage électrique et ateliers éco-énergie pour les collectivités, entreprises et particuliers des zones rurales. Assuré en Responsabilité Civile Professionnelle (risque sport et risque électrique) — habilitation électrique B1V à jour.",
   zone: "Itinérant — zones rurales, quartiers prioritaires et zones d'activités. Tournées hebdomadaires sur convention avec les mairies et entreprises partenaires.",
   services: "Coaching sportif — 300 €/mois (forfait) · séances seniors, entreprises (QVT) et sport sur ordonnance · Dépannage électrique — 60 €/h (habilitation B1V) · Ateliers éco-énergie — 500 €/demi-journée · sensibilisation aux économies d'énergie",
-  ava_bg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
+  ava_bg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
   tags: ['Coaching sportif', 'Électricité', 'Ateliers éco-énergie', 'Sport sur ordonnance', 'Zones rurales'],
   satisfaction: 4.9, communes: 6
 });
