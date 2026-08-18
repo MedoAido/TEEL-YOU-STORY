@@ -856,7 +856,7 @@
       name: "Bus'Énergie", emoji: '🚐', initials: 'BE',
       avaBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
       role: "Prestataire · Coaching sportif · Électricité · Ateliers éco-énergie",
-      bio: "On vient jusqu'à vous — un bus, un intervenant polyvalent, trois services, une seule visite. 🔧💪 Sport sur ordonnance, dépannage électrique et ateliers éco-énergie pour les collectivités, entreprises et particuliers des zones rurales. Assuré en Responsabilité Civile Professionnelle (risque sport et risque électrique) — habilitation électrique B1V à jour.",
+      bio: "La santé par le mouvement, directement chez vous 🌱 Un bus, un intervenant polyvalent, trois services, une seule visite. 🔧💪 Sport sur ordonnance, dépannage électrique et ateliers éco-énergie pour les collectivités, entreprises et particuliers des zones rurales. Assuré en Responsabilité Civile Professionnelle (risque sport et risque électrique) — habilitation électrique B1V à jour.",
       services: "<strong>Coaching sportif</strong> — 300 €/mois (forfait) · séances seniors, entreprises (QVT) et sport sur ordonnance<br><strong>Dépannage électrique</strong> — 60 €/h (habilitation B1V)<br><strong>Ateliers éco-énergie</strong> — 500 €/demi-journée · sensibilisation aux économies d'énergie",
       zone: "Itinérant — zones rurales, quartiers prioritaires et zones d'activités. Tournées hebdomadaires sur convention avec les mairies et entreprises partenaires.",
       satisf: '4.9', communes: '6'
@@ -908,6 +908,14 @@
   // ============================================================
   var posts = [
     {
+      id: 4, pid: 'be', author: "Bus'Énergie", initials: 'BE', badge: 'Prestataire', time: "Aujourd'hui · Aménagement du bus",
+      avaBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
+      photo: null, photoBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)', photoLabel: '🚐☀️ Bus\'Énergie fait le plein',
+      caption: "☀️ Le bus est fin prêt ! Panneaux solaires sur le toit, espace sportif équipé (sangles TRX, miroir de correction de posture, sol amorti) et coin atelier avec établi escamotable et panneau à outils pour le dépannage élec. La santé par le mouvement, directement chez vous 💪🔧 Réservation des créneaux bientôt ouverte.",
+      tags: ['#SportSantéItinérant', '#CoachingSportif', '#DépannageÉlectrique'],
+      likes: 18, liked: false
+    },
+    {
       id: 3, pid: 'be', author: "Bus'Énergie", initials: 'BE', badge: 'Prestataire', time: 'Il y a 2 h · Sur la route',
       avaBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
       photo: null, photoBg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)', photoLabel: '🚐 Passage du bus',
@@ -932,7 +940,7 @@
       likes: 6, liked: false
     }
   ];
-  var nextId = 4;
+  var nextId = 5;
 
   function renderFeed() {
     var list = document.getElementById('feed-list');

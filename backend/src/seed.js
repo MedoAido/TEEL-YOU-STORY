@@ -33,7 +33,7 @@ function insertPostIfMissing(id, userId, caption, tags) {
 const be = upsertUser({ id: 'u_busenergie', name: "Bus'Énergie", email: 'contact@busenergie.example', password: 'demo1234', role: 'prestataire' });
 upsertProfile(be, {
   role_label: 'Coaching sportif · Électricité · Ateliers éco-énergie',
-  bio: "On vient jusqu'à vous — un bus, un intervenant polyvalent, trois services, une seule visite. Sport sur ordonnance, dépannage électrique et ateliers éco-énergie pour les collectivités, entreprises et particuliers des zones rurales. Assuré en Responsabilité Civile Professionnelle (risque sport et risque électrique) — habilitation électrique B1V à jour.",
+  bio: "La santé par le mouvement, directement chez vous. Un bus, un intervenant polyvalent, trois services, une seule visite. Sport sur ordonnance, dépannage électrique et ateliers éco-énergie pour les collectivités, entreprises et particuliers des zones rurales. Assuré en Responsabilité Civile Professionnelle (risque sport et risque électrique) — habilitation électrique B1V à jour.",
   zone: "Itinérant — zones rurales, quartiers prioritaires et zones d'activités. Tournées hebdomadaires sur convention avec les mairies et entreprises partenaires.",
   services: "Coaching sportif — 300 €/mois (forfait) · séances seniors, entreprises (QVT) et sport sur ordonnance · Dépannage électrique — 60 €/h (habilitation B1V) · Ateliers éco-énergie — 500 €/demi-journée · sensibilisation aux économies d'énergie",
   ava_bg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
@@ -67,6 +67,9 @@ upsertProfile(jp, {
 const client = upsertUser({ id: 'u_client_bernard', name: 'Famille Bernard', email: 'bernard@example.com', password: 'demo1234', role: 'client' });
 
 // --- Publications ---
+insertPostIfMissing('post_be_2', be,
+  "☀️ Le bus est fin prêt ! Panneaux solaires sur le toit, espace sportif équipé (sangles TRX, miroir de correction de posture, sol amorti) et coin atelier avec établi escamotable et panneau à outils pour le dépannage élec. La santé par le mouvement, directement chez vous 💪🔧 Réservation des créneaux bientôt ouverte.",
+  ['SportSantéItinérant', 'CoachingSportif', 'DépannageÉlectrique']);
 insertPostIfMissing('post_be_1', be,
   "📍 De passage cette semaine ! Le bus était sur la place du village mardi — 3 séances de coaching, 2 dépannages élec et un après-midi atelier bricolage. Merci à tous ceux qui sont passés dire bonjour 🙌",
   ['CoachingSportif', 'DépannageÉlectrique', 'ZonesRurales']);
