@@ -32,12 +32,12 @@ function insertPostIfMissing(id, userId, caption, tags) {
 // --- Comptes prestataires (mot de passe de démo identique : demo1234) ---
 const be = upsertUser({ id: 'u_busenergie', name: "Bus'Énergie", email: 'contact@busenergie.example', password: 'demo1234', role: 'prestataire' });
 upsertProfile(be, {
-  role_label: 'Coaching · Électricité · Ateliers',
-  bio: "On vient jusqu'à vous — trois services, une seule visite. Zéro déplacement inutile.",
-  zone: 'Tournées hebdomadaires — zones rurales et communes mal desservies.',
-  services: 'Coaching sportif — 300 €/mois (forfait) · Dépannage électrique — 60 €/h · Ateliers pratiques — sur demande',
+  role_label: 'Coaching sportif · Électricité · Ateliers éco-énergie',
+  bio: "On vient jusqu'à vous — un bus, un intervenant polyvalent, trois services, une seule visite. Sport sur ordonnance, dépannage électrique et ateliers éco-énergie pour les collectivités, entreprises et particuliers des zones rurales. Assuré en Responsabilité Civile Professionnelle (risque sport et risque électrique) — habilitation électrique B1V à jour.",
+  zone: "Itinérant — zones rurales, quartiers prioritaires et zones d'activités. Tournées hebdomadaires sur convention avec les mairies et entreprises partenaires.",
+  services: "Coaching sportif — 300 €/mois (forfait) · séances seniors, entreprises (QVT) et sport sur ordonnance · Dépannage électrique — 60 €/h (habilitation B1V) · Ateliers éco-énergie — 500 €/demi-journée · sensibilisation aux économies d'énergie",
   ava_bg: 'linear-gradient(135deg,#5B4FE9,#FF7A59)',
-  tags: ['Coaching', 'Électricité', 'Ateliers', 'Zones rurales'],
+  tags: ['Coaching sportif', 'Électricité', 'Ateliers éco-énergie', 'Sport sur ordonnance', 'Zones rurales'],
   satisfaction: 4.9, communes: 6
 });
 
