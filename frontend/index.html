@@ -437,15 +437,15 @@
       <div class="story-ring"><div class="story-ava">＋</div></div>
       <div class="story-label">Votre story</div>
     </div>
-    <div class="story" onclick="showProfile('be')">
+    <div class="story" onclick="showProfile('u_busenergie')">
       <div class="story-ring"><div class="story-ava" style="background:linear-gradient(135deg,#1B6B4A,#8BC34A)">BE</div></div>
       <div class="story-label">Bus'Énergie</div>
     </div>
-    <div class="story" onclick="showProfile('md')">
+    <div class="story" onclick="showProfile('u_marie')">
       <div class="story-ring"><div class="story-ava" style="background:linear-gradient(135deg,#1BA97A,#7EE9C0)">MD</div></div>
       <div class="story-label">Marie D.</div>
     </div>
-    <div class="story seen" onclick="showProfile('jp')">
+    <div class="story seen" onclick="showProfile('u_julien')">
       <div class="story-ring"><div class="story-ava" style="background:linear-gradient(135deg,#FF7A59,#FFC29B)">JP</div></div>
       <div class="story-label">Julien P.</div>
     </div>
@@ -493,35 +493,7 @@
         <div class="filter-chip" onclick="toggleFilter(this)">Zones rurales</div>
       </div>
 
-      <div class="provider-card" onclick="showProfile('be')">
-        <div class="provider-ava" style="background:linear-gradient(135deg,#1B6B4A,#8BC34A)">BE</div>
-        <div class="provider-info">
-          <div class="provider-name">Bus'Énergie</div>
-          <div class="provider-sub">Bus itinérant · Zones rurales, quartiers prioritaires</div>
-          <div class="provider-tags"><span class="tag">Coaching sportif</span><span class="tag">Sport sur ordonnance</span><span class="tag">Électricité</span><span class="tag">Ateliers éco-énergie</span></div>
-        </div>
-        <div class="chev">›</div>
-      </div>
-
-      <div class="provider-card" onclick="showProfile('md')">
-        <div class="provider-ava" style="background:linear-gradient(135deg,#1BA97A,#7EE9C0)">MD</div>
-        <div class="provider-info">
-          <div class="provider-name">Marie D.</div>
-          <div class="provider-sub">Coiffure à domicile · Secteur Nord</div>
-          <div class="provider-tags"><span class="tag">Coiffure</span><span class="tag">Seniors</span></div>
-        </div>
-        <div class="chev">›</div>
-      </div>
-
-      <div class="provider-card" onclick="showProfile('jp')">
-        <div class="provider-ava" style="background:linear-gradient(135deg,#FF7A59,#FFC29B)">JP</div>
-        <div class="provider-info">
-          <div class="provider-name">Julien P.</div>
-          <div class="provider-sub">Petit bricolage · Itinérant</div>
-          <div class="provider-tags"><span class="tag">Bricolage</span><span class="tag">Dépannage</span></div>
-        </div>
-        <div class="chev">›</div>
-      </div>
+      <div id="provider-list"></div>
 
       <div class="provider-card" id="join-card" style="opacity:0.75" onclick="showScreen('inscription')">
         <div class="provider-ava" style="background:linear-gradient(135deg,#7B7A99,#B7B6D6)">+</div>
@@ -638,6 +610,14 @@
         <input id="reg-name" type="text" placeholder="Ex. Léa Mobile Retouches">
       </div>
       <div class="field">
+        <label>Email</label>
+        <input id="reg-email" type="email" placeholder="vous@exemple.com">
+      </div>
+      <div class="field">
+        <label>Mot de passe</label>
+        <input id="reg-password" type="password" placeholder="••••••••">
+      </div>
+      <div class="field">
         <label>Activité principale</label>
         <select id="reg-activity">
           <option>Coaching / sport</option>
@@ -737,6 +717,42 @@
     setTimeout(function(){ t.classList.remove('show'); }, 1800);
   }
 
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function formatTime(sqlDate) {
+    if (!sqlDate) return '';
+    var d = new Date(sqlDate.replace(' ', 'T') + 'Z');
+    if (isNaN(d.getTime())) return sqlDate;
+    return d.toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  // ============================================================
+  // API — le backend tourne en local (voir backend/README.md).
+  // ============================================================
+  var API_BASE = 'http://localhost:4000/api';
+  var authToken = null;
+  try { authToken = sessionStorage.getItem('tys_token'); } catch (e) {}
+
+  function apiFetch(path, options) {
+    options = options || {};
+    var headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+    if (authToken) headers['Authorization'] = 'Bearer ' + authToken;
+    return fetch(API_BASE + path, Object.assign({}, options, { headers: headers }))
+      .catch(function() {
+        throw new Error("Backend injoignable — vérifiez qu'il tourne sur " + API_BASE + " (voir backend/README.md).");
+      })
+      .then(function(res) {
+        return res.json().catch(function() { return null; }).then(function(data) {
+          if (!res.ok) throw new Error((data && data.error) || ('Erreur ' + res.status));
+          return data;
+        });
+      });
+  }
+
   // ============================================================
   // Connexion professionnelle / utilisateur
   // ============================================================
@@ -748,6 +764,7 @@
   var authRole = 'prestataire';
   var authMode = 'login';
   var currentUser = null;
+  var myReactedPosts = {};
 
   function setAuthRole(role) {
     authRole = role;
@@ -789,19 +806,40 @@
       showToast('Merci de remplir les champs requis');
       return;
     }
-    if (authRole === 'prestataire') {
+    var call = authMode === 'login'
+      ? apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email: email, password: password }) })
+      : apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ name: name, email: email, password: password, role: authRole }) });
+
+    call.then(function(data) {
+      authToken = data.token;
+      try { sessionStorage.setItem('tys_token', authToken); } catch (e) {}
+      return loadCurrentUser();
+    }).then(function() {
+      enterApp();
+    }).catch(function(err) {
+      showToast(err.message || 'Connexion impossible');
+    });
+  }
+
+  function loadCurrentUser() {
+    return apiFetch('/me').then(function(data) {
+      var u = data.user;
       currentUser = {
-        id: 'be', name: name || "Bus'Énergie", initials: 'BE',
-        avaBg: providers.be.avaBg, role: 'prestataire', badge: 'Prestataire'
+        id: u.id, name: u.name, role: u.role,
+        initials: initialsOf(u.name),
+        avaBg: data.profile ? data.profile.avaBg : 'linear-gradient(135deg,#8E8E93,#C7C7CC)',
+        badge: u.role === 'prestataire' ? 'Prestataire' : 'Utilisateur'
       };
-    } else {
-      var uname = name || 'Famille Bernard';
-      currentUser = {
-        id: 'client_bernard', name: uname, initials: name ? initialsOf(uname) : 'FB',
-        avaBg: 'linear-gradient(135deg,#8E8E93,#C7C7CC)', role: 'client', badge: 'Utilisateur'
-      };
-    }
-    enterApp();
+    });
+  }
+
+  function refreshAppData() {
+    return loadProviders().then(function() {
+      return loadFeed();
+    }).then(function() {
+      renderNotifications();
+      loadConversations();
+    });
   }
 
   function enterApp() {
@@ -810,6 +848,7 @@
     document.getElementById('composer-ava').style.background = currentUser.avaBg;
     showScreen('feed');
     showToast('Connecté en tant que ' + (currentUser.role === 'prestataire' ? 'professionnel' : 'utilisateur'));
+    return refreshAppData();
   }
 
   function goToMyProfile() {
@@ -824,6 +863,9 @@
 
   function logout() {
     currentUser = null;
+    authToken = null;
+    myReactedPosts = {};
+    try { sessionStorage.removeItem('tys_token'); } catch (e) {}
     document.getElementById('auth-email').value = '';
     document.getElementById('auth-password').value = '';
     document.getElementById('auth-name').value = '';
@@ -849,98 +891,100 @@
   }
 
   // ============================================================
-  // Providers (data-driven profiles)
+  // Providers (chargés depuis l'API)
   // ============================================================
-  var providers = {
-    be: {
-      name: "Bus'Énergie", emoji: '🚐', initials: 'BE',
-      avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
-      role: "Prestataire · Coaching sportif · Électricité · Ateliers éco-énergie",
-      bio: "La santé par le mouvement, directement chez vous 🌱 Un bus, un intervenant polyvalent, trois services, une seule visite. 🔧💪 Sport sur ordonnance, dépannage électrique et ateliers éco-énergie pour les collectivités, entreprises et particuliers des zones rurales. Assuré en Responsabilité Civile Professionnelle (risque sport et risque électrique) — habilitation électrique B1V à jour.",
-      services: "<strong>Coaching sportif</strong> — 300 €/mois (forfait) · séances seniors, entreprises (QVT) et sport sur ordonnance<br><strong>Dépannage électrique</strong> — 60 €/h (habilitation B1V)<br><strong>Ateliers éco-énergie</strong> — 500 €/demi-journée · sensibilisation aux économies d'énergie",
-      zone: "Itinérant — zones rurales, quartiers prioritaires et zones d'activités. Tournées hebdomadaires sur convention avec les mairies et entreprises partenaires.",
-      satisf: '4.9', communes: '6'
-    },
-    md: {
-      name: "Marie D.", emoji: '💇‍♀️', initials: 'MD',
-      avaBg: 'linear-gradient(135deg,#1BA97A,#7EE9C0)',
-      role: "Prestataire · Coiffure à domicile",
-      bio: "Coiffeuse itinérante, spécialisée dans l'accompagnement des seniors et des personnes à mobilité réduite. Douceur et écoute avant tout. ✂️",
-      services: "<strong>Coupe & brushing</strong> — 25 €<br><strong>Coloration</strong> — 45 €<br><strong>Forfait mensuel seniors</strong> — sur devis",
-      zone: "Secteur Nord — passages tous les jeudis.",
-      satisf: '4.8', communes: '3'
-    },
-    jp: {
-      name: "Julien P.", emoji: '🛠', initials: 'JP',
-      avaBg: 'linear-gradient(135deg,#FF7A59,#FFC29B)',
-      role: "Prestataire · Petit bricolage",
-      bio: "Interventions de petit bricolage et dépannage du quotidien : montage, fixation, petites réparations. Disponible en semaine et le samedi matin.",
-      services: "<strong>Petites réparations</strong> — 35 €/h<br><strong>Montage de meuble</strong> — sur devis<br><strong>Pack \"Journée bricolage\"</strong> — 220 €",
-      zone: "Itinérant — zone élargie, à la demande.",
-      satisf: '4.7', communes: '5'
-    }
-  };
-  var currentProfileId = 'be';
+  var providers = {};
+  var currentProfileId = null;
+
+  function loadProviders() {
+    return apiFetch('/providers').then(function(data) {
+      providers = {};
+      data.providers.forEach(function(p) { providers[p.id] = p; });
+      renderProviderList();
+    }).catch(function(err) {
+      showToast(err.message || 'Annuaire indisponible');
+    });
+  }
+
+  function renderProviderList() {
+    var list = document.getElementById('provider-list');
+    if (!list) return;
+    list.innerHTML = '';
+    Object.keys(providers).forEach(function(id) {
+      var p = providers[id];
+      var card = document.createElement('div');
+      card.className = 'provider-card';
+      card.innerHTML =
+        '<div class="provider-ava" style="background:' + p.avaBg + '">' + escapeHtml(initialsOf(p.name)) + '</div>' +
+        '<div class="provider-info">' +
+          '<div class="provider-name">' + escapeHtml(p.name) + '</div>' +
+          '<div class="provider-sub">' + escapeHtml(p.roleLabel || '') + '</div>' +
+          '<div class="provider-tags">' + (p.tags || []).map(function(t) { return '<span class="tag">' + escapeHtml(t) + '</span>'; }).join('') + '</div>' +
+        '</div>' +
+        '<div class="chev">›</div>';
+      card.addEventListener('click', function() { showProfile(id); });
+      list.appendChild(card);
+    });
+  }
 
   function showProfile(id) {
     currentProfileId = id;
-    var p = providers[id];
-    document.getElementById('p-ava').textContent = p.emoji;
-    document.getElementById('p-ava').style.background = p.avaBg;
-    document.getElementById('p-name').textContent = p.name;
-    document.getElementById('p-role').textContent = p.role;
-    document.getElementById('p-bio').textContent = p.bio;
-    document.getElementById('p-services').innerHTML = p.services;
-    document.getElementById('p-zone').textContent = p.zone;
-    document.getElementById('p-stat-satisf').textContent = p.satisf;
-    document.getElementById('p-stat-communes').textContent = p.communes;
-    document.getElementById('p-stat-posts').textContent = posts.filter(function(post){ return post.pid === id; }).length;
-    document.getElementById('p-cta').onclick = function() { showToast('Demande de réservation envoyée à ' + p.name + ' (démo)'); };
-    document.getElementById('p-message-btn').onclick = function() { openThread(id); };
-    document.getElementById('p-logout').style.display =
-      (currentUser && currentUser.role === 'prestataire' && currentUser.id === id) ? 'block' : 'none';
-    renderGrids();
-    showScreen('profile');
+    apiFetch('/providers/' + encodeURIComponent(id)).then(function(data) {
+      var p = data.provider;
+      providers[id] = p;
+      document.getElementById('p-ava').textContent = initialsOf(p.name);
+      document.getElementById('p-ava').style.background = p.avaBg;
+      document.getElementById('p-name').textContent = p.name;
+      document.getElementById('p-role').textContent = 'Prestataire · ' + (p.roleLabel || '');
+      document.getElementById('p-bio').textContent = p.bio;
+      document.getElementById('p-services').innerHTML = escapeHtml(p.services || '').split(' · ').join('<br>');
+      document.getElementById('p-zone').textContent = p.zone;
+      document.getElementById('p-stat-satisf').textContent = p.satisfaction != null ? p.satisfaction : '—';
+      document.getElementById('p-stat-communes').textContent = p.communes != null ? p.communes : '—';
+      document.getElementById('p-stat-posts').textContent = data.posts.length;
+      document.getElementById('p-cta').onclick = function() { showToast('Demande de réservation envoyée à ' + p.name + ' (démo)'); };
+      document.getElementById('p-message-btn').onclick = function() { openThread(id, p.name, p.avaBg, initialsOf(p.name)); };
+      document.getElementById('p-logout').style.display =
+        (currentUser && currentUser.role === 'prestataire' && currentUser.id === id) ? 'block' : 'none';
+      renderProfileGrid(data.posts);
+      showScreen('profile');
+    }).catch(function(err) {
+      showToast(err.message || 'Profil introuvable');
+    });
   }
 
   // ============================================================
-  // Feed / posts
+  // Feed / posts (chargés depuis l'API)
   // ============================================================
-  var posts = [
-    {
-      id: 4, pid: 'be', author: "Bus'Énergie", initials: 'BE', badge: 'Prestataire', time: "Aujourd'hui · Aménagement du bus",
-      avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
-      photo: null, photoBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)', photoLabel: '🚐☀️ Bus\'Énergie fait le plein',
-      caption: "☀️ Le bus est fin prêt ! Panneaux solaires sur le toit, espace sportif équipé (sangles TRX, miroir de correction de posture, sol amorti) et coin atelier avec établi escamotable et panneau à outils pour le dépannage élec. La santé par le mouvement, directement chez vous 💪🔧 Réservation des créneaux bientôt ouverte.",
-      tags: ['#SportSantéItinérant', '#CoachingSportif', '#DépannageÉlectrique'],
-      likes: 18, liked: false
-    },
-    {
-      id: 3, pid: 'be', author: "Bus'Énergie", initials: 'BE', badge: 'Prestataire', time: 'Il y a 2 h · Sur la route',
-      avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
-      photo: null, photoBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)', photoLabel: '🚐 Passage du bus',
-      caption: '📍 De passage cette semaine ! Le bus était sur la place du village mardi — 3 séances de coaching, 2 dépannages élec et un après-midi atelier bricolage. Merci à tous ceux qui sont passés dire bonjour 🙌',
-      tags: ['#CoachingSportif', '#DépannageÉlectrique', '#ZonesRurales'],
-      likes: 24, liked: false
-    },
-    {
-      id: 2, pid: 'md', author: 'Marie D.', initials: 'MD', badge: 'Prestataire', time: 'Hier · Coiffure à domicile',
-      avaBg: 'linear-gradient(135deg,#1BA97A,#7EE9C0)',
-      photo: null, photoBg: 'linear-gradient(135deg,#1BA97A,#7EE9C0)', photoLabel: '✂️ Studio mobile',
-      caption: 'Merci pour votre confiance cette semaine ✂️ Trois nouveaux créneaux ouverts pour les seniors du secteur, sur rendez-vous.',
-      tags: ['#CoiffureÀDomicile', '#Seniors'],
-      likes: 9, liked: false
-    },
-    {
-      id: 1, pid: 'jp', author: 'Julien P.', initials: 'JP', badge: 'Prestataire', time: 'Il y a 3 j · Petit bricolage',
-      avaBg: 'linear-gradient(135deg,#FF7A59,#FFC29B)',
-      photo: null, photoBg: 'linear-gradient(135deg,#FF7A59,#FFC29B)', photoLabel: '🛠 Journée bricolage',
-      caption: 'Journée bien remplie : 4 interventions de petit bricolage dans le quartier. Prochaine tournée annoncée dans quelques jours.',
-      tags: ['#Bricolage', '#ServiceItinérant'],
-      likes: 6, liked: false
-    }
-  ];
-  var nextId = 5;
+  var posts = [];
+
+  function mapPost(row) {
+    var authorId = row.author ? row.author.id : null;
+    var authorName = row.author ? row.author.name : 'Utilisateur';
+    var prov = authorId ? providers[authorId] : null;
+    var avaBg = prov ? prov.avaBg : 'linear-gradient(135deg,#8E8E93,#C7C7CC)';
+    return {
+      id: row.id, pid: authorId,
+      author: authorName, initials: initialsOf(authorName),
+      badge: prov ? 'Prestataire' : 'Utilisateur',
+      time: formatTime(row.createdAt),
+      avaBg: avaBg,
+      photo: row.photoUrl, photoBg: avaBg, photoLabel: '📷 Publication',
+      caption: row.caption,
+      tags: (row.tags || []).map(function(t) { return '#' + t; }),
+      likes: row.reactions ? row.reactions.soutien : 0,
+      liked: !!myReactedPosts[row.id]
+    };
+  }
+
+  function loadFeed() {
+    return apiFetch('/posts').then(function(data) {
+      posts = data.posts.map(mapPost);
+      renderFeed();
+    }).catch(function(err) {
+      showToast(err.message || 'Fil indisponible');
+    });
+  }
 
   function renderFeed() {
     var list = document.getElementById('feed-list');
@@ -950,12 +994,12 @@
       card.className = 'post-card';
       var mediaInner = p.photo ? '<img src="' + p.photo + '" alt="photo">' : '';
       card.innerHTML =
-        '<div class="post-head" data-pid="' + p.pid + '">' +
-          '<div class="post-ava" style="background:' + p.avaBg + '">' + p.initials + '</div>' +
-          '<div class="post-meta"><div class="post-name">' + p.author + ' <span class="badge">' + p.badge + '</span></div>' +
-          '<div class="post-time">' + p.time + '</div></div>' +
+        '<div class="post-head" data-pid="' + escapeHtml(p.pid || '') + '">' +
+          '<div class="post-ava" style="background:' + p.avaBg + '">' + escapeHtml(p.initials) + '</div>' +
+          '<div class="post-meta"><div class="post-name">' + escapeHtml(p.author) + ' <span class="badge">' + escapeHtml(p.badge) + '</span></div>' +
+          '<div class="post-time">' + escapeHtml(p.time) + '</div></div>' +
         '</div>' +
-        '<div class="post-media" style="background:' + p.photoBg + '">' + mediaInner + (p.photo ? '' : p.photoLabel) + '</div>' +
+        '<div class="post-media" style="background:' + p.photoBg + '">' + mediaInner + (p.photo ? '' : escapeHtml(p.photoLabel)) + '</div>' +
         '<div class="action-row">' +
           '<button class="heart-btn' + (p.liked ? ' liked' : '') + '" data-id="' + p.id + '">' + (p.liked ? '♥' : '♡') + '</button>' +
           '<button>◔</button>' +
@@ -964,48 +1008,61 @@
           '<button>⚑</button>' +
         '</div>' +
         '<div class="likes-line" id="likes-' + p.id + '">' + p.likes + ' soutiens</div>' +
-        '<div class="caption-line"><b>' + p.author + '</b>' + p.caption + '</div>' +
-        '<div class="post-tags">' + p.tags.map(function(t){ return '<span>' + t + '</span>'; }).join('') + '</div>' +
+        '<div class="caption-line"><b>' + escapeHtml(p.author) + '</b>' + escapeHtml(p.caption) + '</div>' +
+        '<div class="post-tags">' + p.tags.map(function(t){ return '<span>' + escapeHtml(t) + '</span>'; }).join('') + '</div>' +
         '<div class="post-footer-note">✦ Réactions positives uniquement — pas de commentaire négatif sur T.Y.S.</div>';
       list.appendChild(card);
     });
     list.querySelectorAll('.heart-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        var id = parseInt(btn.getAttribute('data-id'), 10);
-        var post = posts.find(function(p){ return p.id === id; });
-        post.liked = !post.liked;
-        post.likes += post.liked ? 1 : -1;
-        renderFeed();
+        reactToPost(btn.getAttribute('data-id'));
       });
     });
     list.querySelectorAll('.post-head').forEach(function(el) {
       var pid = el.getAttribute('data-pid');
-      if (providers[pid]) {
+      if (pid && providers[pid]) {
         el.addEventListener('click', function() { showProfile(pid); });
       }
     });
-    renderGrids();
+    renderExploreGrid();
   }
 
-  function renderGrids() {
+  function reactToPost(id) {
+    if (!currentUser) { showToast('Connectez-vous pour réagir'); return; }
+    apiFetch('/posts/' + encodeURIComponent(id) + '/react', { method: 'POST', body: JSON.stringify({ type: 'soutien' }) })
+      .then(function(data) {
+        myReactedPosts[id] = !myReactedPosts[id];
+        var post = posts.find(function(p) { return p.id === id; });
+        if (post) { post.likes = data.reactions.soutien; post.liked = myReactedPosts[id]; }
+        renderFeed();
+      })
+      .catch(function(err) { showToast(err.message || 'Action impossible'); });
+  }
+
+  function renderExploreGrid() {
     var explore = document.getElementById('explore-grid');
-    var profileGrid = document.getElementById('profile-grid');
     explore.innerHTML = '';
-    profileGrid.innerHTML = '';
     posts.forEach(function(p) {
       var bg = p.photo ? ('url(' + p.photo + ')') : p.photoBg;
-      var cell1 = document.createElement('div');
-      cell1.className = 'explore-cell';
-      cell1.style.background = bg;
-      cell1.style.backgroundSize = 'cover';
-      explore.appendChild(cell1);
-      if (p.pid === currentProfileId) {
-        var cell2 = document.createElement('div');
-        cell2.className = 'explore-cell';
-        cell2.style.background = bg;
-        cell2.style.backgroundSize = 'cover';
-        profileGrid.appendChild(cell2);
-      }
+      var cell = document.createElement('div');
+      cell.className = 'explore-cell';
+      cell.style.background = bg;
+      cell.style.backgroundSize = 'cover';
+      explore.appendChild(cell);
+    });
+  }
+
+  function renderProfileGrid(providerPosts) {
+    var grid = document.getElementById('profile-grid');
+    grid.innerHTML = '';
+    var fallbackBg = providers[currentProfileId] ? providers[currentProfileId].avaBg : 'linear-gradient(135deg,#8E8E93,#C7C7CC)';
+    providerPosts.forEach(function(row) {
+      var bg = row.photoUrl ? ('url(' + row.photoUrl + ')') : fallbackBg;
+      var cell = document.createElement('div');
+      cell.className = 'explore-cell';
+      cell.style.background = bg;
+      cell.style.backgroundSize = 'cover';
+      grid.appendChild(cell);
     });
   }
 
@@ -1044,33 +1101,30 @@
       showToast('Ajoutez un texte ou une photo avant de publier');
       return;
     }
-    var author = currentUser || { id: 'be', name: "Bus'Énergie", initials: 'BE', avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)', badge: 'Prestataire' };
-    posts.unshift({
-      id: nextId++, pid: author.id,
-      author: author.name, initials: author.initials, badge: author.badge, time: "À l'instant",
-      avaBg: author.avaBg,
-      photo: pendingPhoto, photoBg: author.avaBg, photoLabel: '📷 Nouvelle publication',
-      caption: text || '(photo partagée)',
-      tags: [],
-      likes: 0, liked: false
+    var body = { caption: text, tags: [] };
+    if (pendingPhoto) body.photoUrl = pendingPhoto;
+    apiFetch('/posts', { method: 'POST', body: JSON.stringify(body) }).then(function(data) {
+      posts.unshift(mapPost(data.post));
+      textEl.value = '';
+      onComposerInput(textEl);
+      clearComposerPhoto();
+      renderFeed();
+      if (currentUser && currentUser.role === 'client') renderClientProfile();
+      showToast('Publié !');
+    }).catch(function(err) {
+      showToast(err.message || 'Publication impossible');
     });
-    textEl.value = '';
-    onComposerInput(textEl);
-    clearComposerPhoto();
-    renderFeed();
-    if (currentUser && currentUser.role === 'client') renderClientProfile();
-    showToast('Publié !');
   }
 
   // ============================================================
   // Activité / notifications
   // ============================================================
   var notifications = [
-    { pid: 'md', icon: '👏', text: '<b>Marie D.</b> a soutenu votre publication', time: 'Il y a 12 min' },
-    { pid: 'jp', icon: '🙌', text: '<b>Julien P.</b> a réagi "Merci" à votre passage', time: 'Il y a 1 h' },
-    { pid: 'be', icon: '📍', text: 'Votre bus est attendu sur 2 nouvelles communes cette semaine', time: 'Il y a 3 h' },
-    { pid: 'md', icon: '❤️', text: '<b>Marie D.</b> a mis un coup de cœur sur votre publication', time: 'Hier' },
-    { pid: 'jp', icon: '✉️', text: '<b>Julien P.</b> vous a envoyé un message', time: 'Hier' }
+    { pid: 'u_marie', icon: '👏', text: '<b>Marie D.</b> a soutenu votre publication', time: 'Il y a 12 min' },
+    { pid: 'u_julien', icon: '🙌', text: '<b>Julien P.</b> a réagi "Merci" à votre passage', time: 'Il y a 1 h' },
+    { pid: 'u_busenergie', icon: '📍', text: 'Votre bus est attendu sur 2 nouvelles communes cette semaine', time: 'Il y a 3 h' },
+    { pid: 'u_marie', icon: '❤️', text: '<b>Marie D.</b> a mis un coup de cœur sur votre publication', time: 'Hier' },
+    { pid: 'u_julien', icon: '✉️', text: '<b>Julien P.</b> vous a envoyé un message', time: 'Hier' }
   ];
 
   function renderNotifications() {
@@ -1078,10 +1132,11 @@
     list.innerHTML = '';
     notifications.forEach(function(n) {
       var p = providers[n.pid];
+      if (!p) return;
       var row = document.createElement('div');
       row.className = 'notif-row';
       row.innerHTML =
-        '<div class="notif-ava" style="background:' + p.avaBg + '">' + p.initials + '</div>' +
+        '<div class="notif-ava" style="background:' + p.avaBg + '">' + escapeHtml(initialsOf(p.name)) + '</div>' +
         '<div class="notif-text">' + n.icon + ' ' + n.text + '<div class="notif-time">' + n.time + '</div></div>';
       row.addEventListener('click', function() { showProfile(n.pid); });
       list.appendChild(row);
@@ -1090,82 +1145,76 @@
   }
 
   // ============================================================
-  // Messagerie
+  // Messagerie (chargée depuis l'API)
   // ============================================================
-  var conversations = [
-    { id: 'md', name: 'Marie D.', avaBg: providers.md.avaBg, initials: 'MD', last: 'Merci, à bientôt !', time: '10:32', unread: false },
-    { id: 'jp', name: 'Julien P.', avaBg: providers.jp.avaBg, initials: 'JP', last: 'Vous serez là mardi prochain ?', time: 'Hier', unread: true },
-    { id: 'client1', name: 'Famille Bernard', avaBg: 'linear-gradient(135deg,#8E8E93,#C7C7CC)', initials: 'FB', last: 'Parfait, on vous attend jeudi.', time: 'Lun.', unread: false }
-  ];
+  var conversations = [];
+  var currentThreadId = null;
 
-  var threadMessages = {
-    md: [
-      { from: 'them', text: 'Bonjour ! Vous repassez sur le secteur Nord bientôt ?' },
-      { from: 'me', text: 'Bonjour Marie, je pensais y être jeudi prochain en fin de matinée.' },
-      { from: 'them', text: 'Merci, à bientôt !' }
-    ],
-    jp: [
-      { from: 'them', text: 'Salut, vous serez là mardi prochain ?' },
-      { from: 'me', text: 'Oui, je passe en début d\'après-midi comme d\'habitude.' }
-    ],
-    client1: [
-      { from: 'them', text: 'Bonjour, est-ce que le bus passe bien près de la mairie jeudi ?' },
-      { from: 'me', text: 'Oui, arrêt prévu de 14h à 17h sur la place.' },
-      { from: 'them', text: 'Parfait, on vous attend jeudi.' }
-    ]
-  };
-
-  function convName(id) {
-    var c = conversations.find(function(x){ return x.id === id; });
-    return c ? c.name : id;
-  }
-  function convAva(id) {
-    var c = conversations.find(function(x){ return x.id === id; });
-    return c ? c.avaBg : 'linear-gradient(135deg,#8E8E93,#C7C7CC)';
-  }
-  function convInitials(id) {
-    var c = conversations.find(function(x){ return x.id === id; });
-    return c ? c.initials : '?';
+  function loadConversations() {
+    return apiFetch('/conversations').then(function(data) {
+      conversations = data.conversations;
+      renderConversations();
+    }).catch(function() {
+      conversations = [];
+      renderConversations();
+    });
   }
 
   function renderConversations() {
     var list = document.getElementById('conv-list');
     list.innerHTML = '';
+    if (!conversations.length) {
+      list.innerHTML = '<div style="padding:20px 2px;color:var(--muted);font-size:13px;">Aucune conversation pour l\'instant.</div>';
+      document.getElementById('msg-dot').style.display = 'none';
+      return;
+    }
     conversations.forEach(function(c) {
+      var other = c.with || { id: '', name: '?' };
+      var prov = providers[other.id];
+      var avaBg = prov ? prov.avaBg : 'linear-gradient(135deg,#8E8E93,#C7C7CC)';
+      var initials = initialsOf(other.name);
       var row = document.createElement('div');
       row.className = 'conv-row';
       row.innerHTML =
-        '<div class="conv-ava" style="background:' + c.avaBg + '">' + c.initials + '</div>' +
-        '<div class="conv-info"><div class="conv-name' + (c.unread ? ' unread' : '') + '">' + c.name + '</div>' +
-        '<div class="conv-last">' + c.last + '</div></div>' +
-        '<div class="conv-time">' + c.time + (c.unread ? '<br><span class="unread-dot" style="display:inline-block;margin-top:4px;"></span>' : '') + '</div>';
-      row.addEventListener('click', function() { c.unread = false; openThread(c.id); });
+        '<div class="conv-ava" style="background:' + avaBg + '">' + escapeHtml(initials) + '</div>' +
+        '<div class="conv-info"><div class="conv-name">' + escapeHtml(other.name) + '</div>' +
+        '<div class="conv-last">' + escapeHtml(c.lastMessage || '') + '</div></div>' +
+        '<div class="conv-time"></div>';
+      row.addEventListener('click', function() { openThreadByConversation(c.id, other.name, avaBg, initials); });
       list.appendChild(row);
     });
-    var anyUnread = conversations.some(function(c){ return c.unread; });
-    document.getElementById('msg-dot').style.display = anyUnread ? 'block' : 'none';
+    document.getElementById('msg-dot').style.display = 'none';
   }
 
-  var currentThreadId = null;
+  function openThread(withUserId, name, avaBg, initials) {
+    apiFetch('/conversations', { method: 'POST', body: JSON.stringify({ withUserId: withUserId }) })
+      .then(function(data) {
+        return openThreadByConversation(data.conversation.id, name, avaBg, initials);
+      })
+      .catch(function(err) { showToast(err.message || "Impossible d'ouvrir la conversation"); });
+  }
 
-  function openThread(id) {
-    currentThreadId = id;
-    document.getElementById('thread-ava').style.background = convAva(id);
-    document.getElementById('thread-ava').textContent = convInitials(id);
-    document.getElementById('thread-name').textContent = convName(id);
-    if (!threadMessages[id]) threadMessages[id] = [];
-    renderThread();
+  function openThreadByConversation(convId, name, avaBg, initials) {
+    currentThreadId = convId;
+    document.getElementById('thread-ava').style.background = avaBg || 'linear-gradient(135deg,#8E8E93,#C7C7CC)';
+    document.getElementById('thread-ava').textContent = initials || '?';
+    document.getElementById('thread-name').textContent = name || '';
     showScreen('thread');
+    return loadThreadMessages();
   }
 
-  function renderThread() {
+  function loadThreadMessages() {
     var box = document.getElementById('thread-messages');
     box.innerHTML = '';
-    (threadMessages[currentThreadId] || []).forEach(function(m) {
-      var row = document.createElement('div');
-      row.className = 'bubble-row ' + m.from;
-      row.innerHTML = '<div class="bubble">' + m.text + '</div>';
-      box.appendChild(row);
+    return apiFetch('/conversations/' + encodeURIComponent(currentThreadId) + '/messages').then(function(data) {
+      data.messages.forEach(function(m) {
+        var row = document.createElement('div');
+        row.className = 'bubble-row ' + (m.mine ? 'me' : 'them');
+        row.innerHTML = '<div class="bubble">' + escapeHtml(m.text) + '</div>';
+        box.appendChild(row);
+      });
+    }).catch(function(err) {
+      showToast(err.message || 'Messages indisponibles');
     });
   }
 
@@ -1173,11 +1222,15 @@
     var input = document.getElementById('thread-input');
     var text = input.value.trim();
     if (!text || !currentThreadId) return;
-    threadMessages[currentThreadId].push({ from: 'me', text: text });
-    input.value = '';
-    renderThread();
-    var conv = conversations.find(function(c){ return c.id === currentThreadId; });
-    if (conv) conv.last = text;
+    apiFetch('/conversations/' + encodeURIComponent(currentThreadId) + '/messages', { method: 'POST', body: JSON.stringify({ text: text }) })
+      .then(function() {
+        input.value = '';
+        return loadThreadMessages();
+      }).then(function() {
+        return loadConversations();
+      }).catch(function(err) {
+        showToast(err.message || 'Envoi impossible');
+      });
   }
 
   // ============================================================
@@ -1185,55 +1238,63 @@
   // ============================================================
   function submitRegistration() {
     var name = document.getElementById('reg-name').value.trim();
+    var email = document.getElementById('reg-email').value.trim();
+    var password = document.getElementById('reg-password').value.trim();
     var activity = document.getElementById('reg-activity').value;
     var zone = document.getElementById('reg-zone').value.trim();
     var price = document.getElementById('reg-price').value.trim();
     var bio = document.getElementById('reg-bio').value.trim();
 
-    if (!name || !zone) {
-      showToast('Merci de renseigner au moins le nom et la zone');
+    if (!name || !email || !password || !zone) {
+      showToast("Merci de renseigner au moins le nom, l'email, le mot de passe et la zone");
       return;
     }
 
-    var initials = name.split(' ').map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
-    var newId = 'new' + Date.now ? 'new_' + name.replace(/\s+/g,'_') : 'new_provider';
-    var grad = 'linear-gradient(135deg,#8E8E93,#C7C7CC)';
-
-    providers[newId] = {
-      name: name, emoji: '⭐', initials: initials, avaBg: grad,
-      role: 'Prestataire · ' + activity,
-      bio: bio || ('Nouveau prestataire T.Y.S — ' + activity + '.'),
-      services: (price ? ('<strong>Tarif indicatif</strong> — ' + price) : 'Tarifs à confirmer'),
-      zone: zone, satisf: '—', communes: '—'
-    };
-
-    var card = document.createElement('div');
-    card.className = 'provider-card';
-    card.innerHTML =
-      '<div class="provider-ava" style="background:' + grad + '">' + initials + '</div>' +
-      '<div class="provider-info"><div class="provider-name">' + name + '</div>' +
-      '<div class="provider-sub">' + activity + ' · ' + zone + '</div></div>' +
-      '<div class="chev">›</div>';
-    card.addEventListener('click', function() { showProfile(newId); });
-    document.getElementById('join-card').insertAdjacentElement('beforebegin', card);
-
-    document.getElementById('reg-name').value = '';
-    document.getElementById('reg-zone').value = '';
-    document.getElementById('reg-price').value = '';
-    document.getElementById('reg-bio').value = '';
-
-    showToast('Demande envoyée — profil ajouté en démonstration');
-    showScreen('search');
+    apiFetch('/auth/register', { method: 'POST', body: JSON.stringify({ name: name, email: email, password: password, role: 'prestataire' }) })
+      .then(function(data) {
+        authToken = data.token;
+        try { sessionStorage.setItem('tys_token', authToken); } catch (e) {}
+        return apiFetch('/me/profile', { method: 'PUT', body: JSON.stringify({
+          roleLabel: activity,
+          zone: zone,
+          services: price ? ('Tarif indicatif — ' + price) : undefined,
+          bio: bio || undefined
+        }) });
+      })
+      .then(function() { return loadCurrentUser(); })
+      .then(function() {
+        document.getElementById('auth-overlay').style.display = 'none';
+        document.getElementById('composer-ava').textContent = currentUser.initials;
+        document.getElementById('composer-ava').style.background = currentUser.avaBg;
+        return refreshAppData();
+      })
+      .then(function() {
+        document.getElementById('reg-name').value = '';
+        document.getElementById('reg-email').value = '';
+        document.getElementById('reg-password').value = '';
+        document.getElementById('reg-zone').value = '';
+        document.getElementById('reg-price').value = '';
+        document.getElementById('reg-bio').value = '';
+        showToast('Compte prestataire créé et connecté !');
+        goToMyProfile();
+      })
+      .catch(function(err) {
+        showToast(err.message || 'Inscription impossible');
+      });
   }
 
   // ============================================================
   // Init
   // ============================================================
-  renderFeed();
-  renderNotifications();
-  renderConversations();
   updateAuthHint();
-  document.getElementById('activite-dot').style.display = 'block';
+  if (authToken) {
+    loadCurrentUser().then(function() {
+      return enterApp();
+    }).catch(function() {
+      authToken = null;
+      try { sessionStorage.removeItem('tys_token'); } catch (e) {}
+    });
+  }
 </script>
 
 </body>

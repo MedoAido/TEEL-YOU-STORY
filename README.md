@@ -4,25 +4,10 @@ Plateforme qui met en relation prestataires itinérants et utilisateurs, avec un
 d'actualité positif (pas de commentaire négatif). Le dépôt contient le prototype frontend et
 les fondations du backend.
 
-## `frontend/index.html`
+## Démarrage rapide
 
-Le prototype de l'application — une seule page HTML/CSS/JS autonome (aucune dépendance,
-aucune installation nécessaire). Double-cliquer sur le fichier l'ouvre dans un navigateur.
-
-Contient : écran de connexion (professionnelle / utilisateur), fil d'actualité façon Insta
-avec partage de photo, recherche/annuaire de prestataires, profils individuels dynamiques,
-messagerie fonctionnelle, activité/notifications, et formulaire d'inscription prestataire.
-
-**Important : ce prototype fonctionne actuellement en circuit fermé.** Toutes les données
-(comptes, publications, messages) sont stockées en mémoire dans le navigateur via des
-variables JavaScript — rien n'est envoyé au backend pour le moment. C'est voulu pour un
-prototype qu'on peut ouvrir n'importe où sans rien installer, mais ça veut dire que rafraîchir
-la page réinitialise tout, et que le frontend et le backend ne se parlent pas encore.
-
-## `backend/`
-
-L'API T.Y.S — Node.js pur (aucune dépendance externe, voir `backend/README.md` pour le détail
-et la référence complète des routes). Démarrage :
+Le frontend est maintenant branché sur le backend (fini le circuit fermé) — il faut donc
+lancer les deux :
 
 ```bash
 cd backend
@@ -30,18 +15,38 @@ node src/seed.js     # crée la base et les comptes de démo
 node src/server.js   # démarre l'API sur http://localhost:4000
 ```
 
-Gère déjà : inscription/connexion avec distinction professionnel/utilisateur, profils
-prestataires, publications, réactions positives, messagerie — soit toute la même logique que
-le prototype frontend, mais côté serveur avec une vraie base de données.
+Puis ouvrir `frontend/index.html` dans un navigateur (double-clic, ou servi par Vercel).
+Le frontend appelle `http://localhost:4000/api/...` — sans backend qui tourne en local,
+la connexion et le fil d'actualité échoueront avec un message d'erreur explicite.
 
-## Prochaine étape naturelle : relier les deux
+Comptes de démo (mot de passe `demo1234`) : `contact@busenergie.example` (Bus'Énergie),
+`marie@busenergie.example` (Marie D.), `julien@busenergie.example` (Julien P.),
+`bernard@example.com` (Famille Bernard, client).
 
-Le frontend et le backend ont été conçus en miroir (mêmes concepts : `providers`, `posts`,
-`conversations`, rôles `prestataire`/`client`) mais ne sont pas encore branchés ensemble. Pour
-les connecter, il faudrait dans `frontend/index.html` :
+## `frontend/index.html`
 
-1. Remplacer les tableaux JS en mémoire (`posts`, `providers`, `conversations`, etc.) par des
-   appels `fetch()` vers `http://localhost:4000/api/...`.
-2. Stocker le `token` renvoyé par `/api/auth/login` (par exemple en variable JS ou
-   `sessionStorage`).
-3. Envoyer ce token dans l'en-tête `Authorization: Bearer <token>` de chaque requête protégée.
+Le prototype de l'application — une seule page HTML/CSS/JS (aucune dépendance de build).
+Contient : écran de connexion (professionnelle / utilisateur), fil d'actualité façon Insta
+avec partage de photo, recherche/annuaire de prestataires, profils individuels dynamiques,
+messagerie fonctionnelle, activité/notifications, et inscription prestataire (crée un vrai
+compte via l'API).
+
+Branché sur le backend : connexion/inscription, fil de publications, réactions, annuaire des
+prestataires, profils et messagerie passent tous par de vrais appels `fetch()` vers l'API,
+avec le token de session stocké en `sessionStorage`. Deux choses restent volontairement
+côté frontend uniquement, faute d'équivalent côté API : les notifications d'activité (mock)
+et la case "Réservations/Favoris" du profil utilisateur.
+
+## `backend/`
+
+L'API T.Y.S — Node.js pur (aucune dépendance externe, voir `backend/README.md` pour le détail
+et la référence complète des routes). Gère l'inscription/connexion avec distinction
+professionnel/utilisateur, les profils prestataires, les publications, les réactions
+positives et la messagerie.
+
+## Déploiement
+
+`vercel.json` pointe Vercel vers `frontend/` (`outputDirectory`) pour servir le prototype à
+la racine. Le backend n'est pas déployé (c'est un serveur Node.js à process long, pas une
+fonction serverless) — en production, seul le frontend statique est en ligne, et il a besoin
+d'un backend accessible pour fonctionner pleinement.
