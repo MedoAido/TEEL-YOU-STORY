@@ -856,9 +856,9 @@
       name: "Bus'Énergie", emoji: '🚐', initials: 'BE',
       avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
       role: "Prestataire · Coaching sportif · Électricité · Ateliers éco-énergie",
-      bio: "La santé par le mouvement, directement chez vous 🌱 Un bus, un intervenant polyvalent, trois services, une seule visite. 🔧💪 Sport sur ordonnance, dépannage électrique et ateliers éco-énergie pour les collectivités, entreprises et particuliers des zones rurales. Assuré en Responsabilité Civile Professionnelle (risque sport et risque électrique) — habilitation électrique B1V à jour.",
+      bio: "La santé par le mouvement, directement chez vous 🌱 Un bus, un intervenant polyvalent, trois services, une seule visite. 🔧💪 Sport sur ordonnance, dépannage électrique et ateliers éco-énergie pour les collectivités, entreprises et particuliers des zones rurales. Assuré en Responsabilité Civile Professionnelle (risque sport et risque électrique) — habilitation électrique B1V à jour. Itinérance responsable : un seul déplacement plutôt que plusieurs trajets, en partenariat avec les collectivités et bailleurs engagés, pour réduire la fracture écologique et améliorer la qualité de vie dans les zones isolées.",
       services: "<strong>Coaching sportif</strong> — 300 €/mois (forfait) · séances seniors, entreprises (QVT) et sport sur ordonnance<br><strong>Dépannage électrique</strong> — 60 €/h (habilitation B1V)<br><strong>Ateliers éco-énergie</strong> — 500 €/demi-journée · sensibilisation aux économies d'énergie",
-      zone: "Itinérant — zones rurales, quartiers prioritaires et zones d'activités. Tournées hebdomadaires sur convention avec les mairies et entreprises partenaires.",
+      zone: "Itinérant — zones rurales, quartiers prioritaires et zones d'activités. Tournées hebdomadaires sur convention avec les mairies et entreprises partenaires : Saint-Just, Vallée-Verte, Combe-Rousse, Les Ormes, Pré-au-Bois et Font-Claire.",
       satisf: '4.9', communes: '6'
     },
     md: {
@@ -908,6 +908,14 @@
   // ============================================================
   var posts = [
     {
+      id: 5, pid: 'be', author: "Bus'Énergie", initials: 'BE', badge: 'Prestataire', time: "Aujourd'hui · Planning des tournées",
+      avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
+      photo: null, photoBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)', photoLabel: '🗓️ Réservation ouverte',
+      caption: "🗓️ Les créneaux sont ouverts ! Le bus passe désormais chaque semaine à Saint-Just (lundi), Vallée-Verte (mardi), Combe-Rousse (mercredi), Les Ormes (jeudi), Pré-au-Bois (vendredi) et Font-Claire (un samedi sur deux). Coaching, dépannage électrique ou atelier éco-énergie : réservez votre créneau directement depuis mon profil 👇",
+      tags: ['#SportSantéItinérant', '#DépannageÉlectrique', '#AteliersÉcoÉnergie'],
+      likes: 31, liked: false
+    },
+    {
       id: 4, pid: 'be', author: "Bus'Énergie", initials: 'BE', badge: 'Prestataire', time: "Aujourd'hui · Aménagement du bus",
       avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
       photo: null, photoBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)', photoLabel: '🚐☀️ Bus\'Énergie fait le plein',
@@ -938,9 +946,17 @@
       caption: 'Journée bien remplie : 4 interventions de petit bricolage dans le quartier. Prochaine tournée annoncée dans quelques jours.',
       tags: ['#Bricolage', '#ServiceItinérant'],
       likes: 6, liked: false
+    },
+    {
+      id: 6, pid: 'be', author: "Bus'Énergie", initials: 'BE', badge: 'Prestataire', time: "Il y a 5 j · Coulisses de l'aménagement",
+      avaBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)',
+      photo: null, photoBg: 'linear-gradient(135deg,#1B6B4A,#8BC34A)', photoLabel: '🔧 4 étapes pour un bus prêt à tout',
+      caption: "🔧 Les coulisses de l'aménagement, en 4 étapes : structure & isolation (nettoyage, isolation thermique liège/laine de chanvre, plancher CP marine), énergie & technique (batteries AGM/lithium, convertisseur 3000W, tableau électrique), agencement des zones accueil/sport/atelier (bureau et établi escamotables, rangements muraux) et enfin finitions & équipement (plafond LED modulable, sol amortissant, panneaux solaires, trousse de secours). Un bus pensé pour durer et pour vous 🚐",
+      tags: ['#AménagementBus', '#ItinéranceResponsable'],
+      likes: 27, liked: false
     }
   ];
-  var nextId = 5;
+  var nextId = 7;
 
   function renderFeed() {
     var list = document.getElementById('feed-list');
